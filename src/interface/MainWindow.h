@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "../models/NoteTreeModel.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -18,8 +20,12 @@ public:
 public slots:
     void on_actionAboutQt_triggered();
 
+    void on_treeViewNotes_customContextMenuRequested(const QPoint & point);
+
 private:
     Ui::MainWindow* ui;
+
+    NoteTreeModel* noteTreeModel;
 };
 
 #endif // MAINWINDOW_H

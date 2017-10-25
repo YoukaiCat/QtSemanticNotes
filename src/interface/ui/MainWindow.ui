@@ -114,15 +114,24 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTreeWidget" name="treeWidgetNotes">
+             <widget class="QTreeView" name="treeViewNotes">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
               <property name="lineWidth">
                <number>0</number>
               </property>
-              <property name="columnCount">
-               <number>0</number>
+              <property name="dragEnabled">
+               <bool>true</bool>
+              </property>
+              <property name="dragDropMode">
+               <enum>QAbstractItemView::InternalMove</enum>
+              </property>
+              <property name="defaultDropAction">
+               <enum>Qt::MoveAction</enum>
               </property>
              </widget>
             </item>
@@ -155,15 +164,18 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTreeWidget" name="treeWidgetTags">
+             <widget class="QTreeView" name="treeViewTags">
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
               <property name="lineWidth">
                <number>0</number>
               </property>
-              <property name="columnCount">
-               <number>0</number>
+              <property name="dragEnabled">
+               <bool>true</bool>
+              </property>
+              <property name="dragDropMode">
+               <enum>QAbstractItemView::DragOnly</enum>
               </property>
              </widget>
             </item>
@@ -305,6 +317,12 @@
                </property>
                <property name="lineWidth">
                 <number>0</number>
+               </property>
+               <property name="dragDropMode">
+                <enum>QAbstractItemView::DropOnly</enum>
+               </property>
+               <property name="defaultDropAction">
+                <enum>Qt::LinkAction</enum>
                </property>
                <property name="alternatingRowColors">
                 <bool>true</bool>
