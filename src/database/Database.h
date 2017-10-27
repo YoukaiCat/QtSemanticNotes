@@ -3,31 +3,23 @@
 
 #include "Database.h"
 
-#include <QObject>
 #include <QSqlQuery>
 
-class Database : public QObject
+class Database
 {
-    Q_OBJECT
-
 public:
-    explicit Database(QObject* parent = nullptr);
+    explicit Database();
     ~Database();
 
-    void openDatabase(const QString& path);
-    void closeDatabase();
-    bool isOpen();
+    static void openDatabase(const QString& path);
+    static void closeDatabase();
+    static bool isOpen();
 
-signals:
-    void databaseOpened(const QString& name);
-    void databaseClosed();
-
-public slots:
+    static void safeExecQuery(const QString& query);
+    static void safeExecPreparedQuery(QSqlQuery& query);
 
 private:
-    void defineSchema();
-    void safeExecQuery(const QString& query);
-    void safeExecPreparedQuery(QSqlQuery& query);
+    static void defineSchema();
 };
 
 #endif // DATABASE_H

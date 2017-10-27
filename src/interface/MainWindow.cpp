@@ -10,7 +10,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 
-#include "../entities/SQLNote.h"
+#include "../entities/Note.h"
 
 #include <QDebug>
 

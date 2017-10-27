@@ -1,4 +1,4 @@
-#include "SQLNote.h"
+#include "Note.h"
 
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -19,7 +19,7 @@ QList<SQLNote> SQLNote::getAll()
     QList<SQLNote> notes;
     while (q.next()) {
          SQLNote note;
-         note.setId(q.value(0).toInt());
+         note.setId(q.value(0).toULongLong());
          note.setTitle(q.value(1).toString());
          note.setContent(q.value(2).toString());
          note.setCreatedAt(q.value(3).toDateTime());
@@ -29,7 +29,7 @@ QList<SQLNote> SQLNote::getAll()
     return notes;
 }
 
-SQLNote SQLNote::getById(int id)
+SQLNote SQLNote::getById(quint64 id)
 {
     QSqlQuery q;
     q.prepare("select id, title, content, created_at, updated_at "
@@ -39,7 +39,7 @@ SQLNote SQLNote::getById(int id)
 
     SQLNote note;
     while (q.next()) {
-         note.setId(q.value(0).toInt());
+         note.setId(q.value(0).toULongLong());
          note.setTitle(q.value(1).toString());
          note.setContent(q.value(2).toString());
          note.setCreatedAt(q.value(3).toDateTime());
@@ -48,12 +48,12 @@ SQLNote SQLNote::getById(int id)
     return note;
 }
 
-int SQLNote::getId() const
+quint64 SQLNote::getId() const
 {
     return id;
 }
 
-void SQLNote::setId(int value)
+void SQLNote::setId(quint64 value)
 {
     id = value;
 }

@@ -10,10 +10,10 @@ public:
     SQLNote();
 
     static QList<SQLNote> getAll();
-    static SQLNote getById(int id);
+    static SQLNote getById(quint64 id);
 
-    int getId() const;
-    void setId(int id);
+    quint64 getId() const;
+    void setId(quint64 id);
 
     QString getTitle() const;
     void setTitle(const QString& title);
@@ -33,7 +33,7 @@ public:
     QString toString();
 
 private:
-    int id;
+    quint64 id;
     QString title;
     QString content;
     QDateTime createdAt;

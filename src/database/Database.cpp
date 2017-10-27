@@ -5,8 +5,7 @@
 
 #include <QDebug>
 
-Database::Database(QObject* parent)
-    : QObject(parent)
+Database::Database()
 {}
 
 Database::~Database()
@@ -49,8 +48,6 @@ void Database::openDatabase(const QString& path)
         qDebug() << QSqlDatabase::database().lastError();
         return;
     }
-
-    emit databaseOpened(path);
 }
 
 void Database::closeDatabase()
@@ -58,7 +55,6 @@ void Database::closeDatabase()
     if (QSqlDatabase::database().isOpen()) {
         QSqlDatabase::database().close();
     }
-    emit databaseClosed();
 }
 
 bool Database::isOpen()
