@@ -1,25 +1,33 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
+#include "Database.h"
+
 #include <QObject>
+#include <QSqlQuery>
 
 class Database : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Database(QObject* parent = nullptr)
-        : QObject(parent) {}
+    explicit Database(QObject* parent = nullptr);
+    ~Database();
 
-    virtual void openDatabase(const QString& path) = 0;
-    virtual void closeDatabase() = 0;
-    virtual bool isOpen() = 0;
+    void openDatabase(const QString& path);
+    void closeDatabase();
+    bool isOpen();
 
 signals:
-    void databaseOpened(const QString name);
+    void databaseOpened(const QString& name);
     void databaseClosed();
 
 public slots:
+
+private:
+    void defineSchema();
+    void safeExecQuery(const QString& query);
+    void safeExecPreparedQuery(QSqlQuery& query);
 };
 
 #endif // DATABASE_H

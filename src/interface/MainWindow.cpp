@@ -5,10 +5,14 @@
 #include <QHash>
 
 #include "../database/Database.h"
-#include "../database/SQLiteDatabase.h"
+#include "../database/Database.h"
 
 #include <QSqlQuery>
 #include <QSqlRecord>
+
+#include "../entities/SQLNote.h"
+
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -16,8 +20,8 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    SQliteDatabase db;
-    db.openDatabase(":memory:");
+    Database db;
+    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
 
     QHash<int, TreeItem*> NoteIdToNoteTreeItem;
 
@@ -33,6 +37,8 @@ MainWindow::MainWindow(QWidget* parent) :
 
 //        }
 //    }
+
+    qDebug() << SQLNote::getAll().count();
 
     noteTreeModel = new NoteTreeModel(rootItem);
     ui->treeViewNotes->setModel(noteTreeModel);
