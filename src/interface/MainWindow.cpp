@@ -1,18 +1,20 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
-#include <QDirModel>
 #include <QHash>
-
-#include "../database/Database.h"
-#include "../database/Database.h"
 
 #include <QSqlQuery>
 #include <QSqlRecord>
 
-#include "../entities/Note.h"
+#include <QMessageBox>
 
 #include <QDebug>
+
+#include "../database/Database.h"
+
+#include "../entities/AbstractNote.h"
+#include "../entities/Note.h"
+#include "../entities/RootNote.h"
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
@@ -20,28 +22,34 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    Database db;
-    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    try {
+        Database db;
+        db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+        //db.openDatabase(":memory:");
 
-    QHash<int, TreeItem*> NoteIdToNoteTreeItem;
+        QHash<int, TreeItem*> IdToTreeItem;
 
-    QSqlQuery q("select * from notes join relations");
-    QSqlRecord rec = q.record();
+        RootNote rootNote = RootNote::getRoot().value();
 
-    TreeItem * rootItem = new TreeItem("Title");
-//    while (q.next()) {
-//        //NoteIdToNoteTreeItem[]
-//        if (NoteIdToNoteTreeItem.contains(q.value(1).toInt())) {
-//            NoteIdToNoteTreeItem(q.value(1).toInt());
-//        } else {
+        TreeItem * rootItem = new TreeItem(rootNote.getTitle());
 
-//        }
-//    }
+        qDebug() << Note::getAll().count();
 
-    qDebug() << SQLNote::getAll().count();
-
-    noteTreeModel = new NoteTreeModel(rootItem);
-    ui->treeViewNotes->setModel(noteTreeModel);
+        noteTreeModel = new NoteTreeModel(rootItem);
+        ui->treeViewNotes->setModel(noteTreeModel);
+    } catch (OpenDBException e) {
+        QMessageBox::critical(this,
+            "Error occured while opening or creating database",
+            e.getMessage());
+    } catch (QueryException e) {
+        QMessageBox::critical(this,
+            "SQL Query error occured",
+            e.getMessage());
+    } catch (RootUnsupportedActionException e) {
+        QMessageBox::critical(this,
+            "Internal error",
+            e.getMessage());
+    }
 }
 
 MainWindow::~MainWindow()

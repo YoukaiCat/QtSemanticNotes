@@ -1,22 +1,65 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-#include "Database.h"
+#include <QException>
+#include <QString>
+#include <QSqlError>
+
+class OpenDBException : public QException
+{
+public:
+    OpenDBException(const QString& message);
+    OpenDBException(const QSqlError& error);
+    void raise() const;
+    OpenDBException* clone() const;
+    QString getMessage() const;
+
+private:
+    QString message;
+};
+
+class QueryException : public QException
+{
+public:
+    QueryException(const QString& message);
+    QueryException(const QSqlError& error);
+    void raise() const;
+    QueryException* clone() const;
+    QString getMessage() const;
+
+private:
+    QString message;
+};
 
 #include <QSqlQuery>
 
 class Database
 {
 public:
-    explicit Database();
-    ~Database();
-
     static void openDatabase(const QString& path);
     static void closeDatabase();
     static bool isOpen();
 
-    static void safeExecQuery(const QString& query);
-    static void safeExecPreparedQuery(QSqlQuery& query);
+    inline static void safeExecQuery(const QString& query)
+    {
+        static QSqlQuery q;
+        if(!q.exec(query)) {
+            QString m("Query error:\n");
+            m.append(q.lastQuery());
+            m.append(q.lastError().text());
+            throw QueryException(m);
+        }
+    }
+
+    inline static void safeExecPreparedQuery(QSqlQuery& query)
+    {
+        if(!query.exec()) {
+            QString m("Query error:\n");
+            m.append(query.lastQuery());
+            m.append(query.lastError().text());
+            throw QueryException(m);
+        }
+    }
 
 private:
     static void defineSchema();

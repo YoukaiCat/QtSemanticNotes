@@ -5,48 +5,86 @@
 
 #include <QDebug>
 
-Database::Database()
+OpenDBException::OpenDBException(const QString& message)
+    : message(message)
 {}
 
-Database::~Database()
+OpenDBException::OpenDBException(const QSqlError& error)
+    : message(error.text())
+{}
+
+void OpenDBException::raise() const
 {
-    closeDatabase();
+    throw *this;
+}
+
+OpenDBException* OpenDBException::clone() const
+{
+    return new OpenDBException(*this);
+}
+
+QString OpenDBException::getMessage() const
+{
+    return message;
+}
+
+QueryException::QueryException(const QString& message)
+    : message(message)
+{}
+
+QueryException::QueryException(const QSqlError& error)
+    : message(error.text())
+{}
+
+void QueryException::raise() const
+{
+    throw *this;
+}
+
+QueryException* QueryException::clone() const
+{
+    return new QueryException(*this);
+}
+
+QString QueryException::getMessage() const
+{
+    return message;
 }
 
 void Database::openDatabase(const QString& path)
 {
     if (QSqlDatabase::database().isOpen()) {
-        qDebug() << "Database already open";
-        return;
+        throw OpenDBException("Database already open");
     }
 
     if (!QSqlDatabase::database().isDriverAvailable("QSQLITE")) {
-        qDebug() << "QSQLITE driver isn't available";
-        qDebug() << "Available drivers: ";
-        qDebug() << QSqlDatabase::database().drivers().join(",");
-        return;
+        QString m("QSQLITE driver isn't available\nAvailable drivers:\n");
+        m.append(QSqlDatabase::database().drivers().join(","));
+        throw OpenDBException(m);
     }
 
     QSqlDatabase::addDatabase("QSQLITE");
     if (!QSqlDatabase::database().isValid()) {
-        qDebug() << "Driver is invalid";
-        return;
+        throw OpenDBException("Driver is invalid");
     }
 
     QSqlDatabase::database().setDatabaseName(path);
     if (!QSqlDatabase::database().open()) {
-        qDebug() << QSqlDatabase::database().lastError();
-        return;
+        throw OpenDBException(QSqlDatabase::database().lastError());
     }
 
     QSqlQuery query("select name from application");
     if (!(query.next() && (query.value(0).toString() == QString("QtSemanticNotes")))) {
-        defineSchema();
+        if (QSqlDatabase::database().transaction()) {
+            defineSchema();
+            QSqlDatabase::database().commit();
+        } else {
+            throw OpenDBException("Driver does not support transactions");
+        }
     }
 
     if (QSqlDatabase::database().lastError().isValid()) {
-        qDebug() << QSqlDatabase::database().lastError();
-        return;
+        throw OpenDBException(QSqlDatabase::database().lastError());
     }
 }
 
@@ -170,14 +208,16 @@ void Database::defineSchema()
             "tokenize = 'porter unicode61 remove_diacritics 1'"
         ")");
 
-    safeExecQuery("CREATE TRIGGER after_insert_note_update_index "
+    safeExecQuery(
+        "CREATE TRIGGER after_insert_note_update_index "
         "AFTER INSERT ON notes "
         "BEGIN "
             "INSERT INTO notes_fts(rowid, title, content) "
                 "VALUES (NEW.id, NEW.title, NEW.content); "
         "END;");
 
-    safeExecQuery("CREATE TRIGGER after_delete_note_update_index "
+    safeExecQuery(
+        "CREATE TRIGGER after_delete_note_update_index "
         "AFTER DELETE ON notes "
         "BEGIN "
             "INSERT INTO notes_fts(fts_idx, rowid, title, content) "
@@ -236,23 +276,7 @@ void Database::defineSchema()
     safeExecQuery("insert into notes (title) values ('test1')");
     safeExecQuery("insert into relations (note_id, parent_id) values (2, 1)");
     safeExecQuery("insert into relations (note_id, parent_id) values (3, 2)");
-}
-
-void Database::safeExecQuery(const QString& query)
-{
-    QSqlQuery q;
-    if(!q.exec(query)) {
-        qDebug() << "Query error: ";
-        qDebug() << q.lastQuery();
-        qDebug() << q.lastError();
-    }
-}
-
-void Database::safeExecPreparedQuery(QSqlQuery& query)
-{
-    if(!query.exec()) {
-        qDebug() << "Query error: ";
-        qDebug() << query.lastQuery();
-        qDebug() << query.lastError();
-    }
+    safeExecQuery("insert into aliases (alias, note_id) values ('a b c', 2)");
+    safeExecQuery("insert into aliases (alias, note_id) values ('c d e', 2)");
+    safeExecQuery("insert into aliases (alias, note_id) values ('f g h', 2)");
 }

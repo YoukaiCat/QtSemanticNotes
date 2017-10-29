@@ -7,130 +7,121 @@
 
 #include <QDebug>
 
-SQLNote::SQLNote()
+#include "../database/Database.h"
+
+Note::Note()
+    : AbstractNote()
 {}
 
-QList<SQLNote> SQLNote::getAll()
+Note::Note(const Id& id, const QString& title, const QString& content,
+           const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
+    : AbstractNote(id, title, content, createdAt, updatedAt),
+      parentId(parentId)
+{}
+
+QList<Note> Note::getAll()
 {
     QSqlQuery q;
-    q.prepare("select id, title, content, created_at, updated_at from notes");
-    q.exec();
+    q.prepare("SELECT notes.id, notes.title, notes.content, "
+              "notes.created_at, notes.updated_at, relations.parent_id "
+              "FROM notes JOIN relations ON relations.note_id = notes.id "
+              "WHERE NOT notes.id = 1");
+    Database::safeExecPreparedQuery(q);
 
-    QList<SQLNote> notes;
+    QList<Note> notes;
     while (q.next()) {
-         SQLNote note;
-         note.setId(q.value(0).toULongLong());
-         note.setTitle(q.value(1).toString());
-         note.setContent(q.value(2).toString());
-         note.setCreatedAt(q.value(3).toDateTime());
-         note.setUpdatedAt(q.value(4).toDateTime());
-         notes.append(note);
+        Note note(q.value(0).toUInt(),
+            q.value(1).toString(),
+            q.value(2).toString(),
+            q.value(3).toDateTime(),
+            q.value(4).toDateTime(),
+            q.value(5).toUInt());
+        notes.append(note);
     }
     return notes;
 }
 
-SQLNote SQLNote::getById(quint64 id)
+std::optional<Note> Note::getById(Id id)
 {
     QSqlQuery q;
-    q.prepare("select id, title, content, created_at, updated_at "
-              "from notes where id = :id");
+    q.prepare("SELECT notes.id, notes.title, notes.content, "
+              "notes.created_at, notes.updated_at, relations.parent_id "
+              "FROM notes JOIN relations ON relations.note_id = notes.id "
+              "WHERE notes.id = :id AND NOT notes.id = 1");
     q.bindValue(":id", id);
-    q.exec();
+    Database::safeExecPreparedQuery(q);
 
-    SQLNote note;
-    while (q.next()) {
-         note.setId(q.value(0).toULongLong());
-         note.setTitle(q.value(1).toString());
-         note.setContent(q.value(2).toString());
-         note.setCreatedAt(q.value(3).toDateTime());
-         note.setUpdatedAt(q.value(4).toDateTime());
+    if (q.next()) {
+        Note note(q.value(0).toUInt(),
+            q.value(1).toString(),
+            q.value(2).toString(),
+            q.value(3).toDateTime(),
+            q.value(4).toDateTime(),
+            q.value(5).toUInt());
+        return note;
+    } else {
+        return std::nullopt;
     }
-    return note;
 }
 
-quint64 SQLNote::getId() const
+bool Note::isRoot() const
 {
-    return id;
+    return false;
 }
 
-void SQLNote::setId(quint64 value)
+Id Note::getParentId() const
 {
-    id = value;
+    return parentId;
 }
 
-QString SQLNote::getTitle() const
+void Note::setParentId(const Id& value)
 {
-    return title;
+    parentId = value;
 }
 
-void SQLNote::setTitle(const QString& value)
-{
-    title = value;
-}
-
-QString SQLNote::getContent() const
-{
-    return content;
-}
-
-void SQLNote::setContent(const QString& value)
-{
-    content = value;
-}
-
-QDateTime SQLNote::getCreatedAt() const
-{
-    return createdAt;
-}
-
-void SQLNote::setCreatedAt(const QDateTime& value)
-{
-    createdAt = value;
-}
-
-QDateTime SQLNote::getUpdatedAt() const
-{
-    return updatedAt;
-}
-
-void SQLNote::setUpdatedAt(const QDateTime& value)
-{
-    updatedAt = value;
-}
-
-void SQLNote::create()
+void Note::create() const
 {
     QSqlQuery q;
-    q.prepare("insert into notes (title, content, created_at, updated_at) "
-              "values (:title, :content, :created_at, :updated_at)");
-    q.bindValue(":title", getTitle());
-    q.bindValue(":content", getContent());
-    q.bindValue(":created_at", getCreatedAt().toString());
-    q.bindValue(":updated_at", getUpdatedAt().toString());
-    q.exec();
+    q.prepare("INSERT INTO notes (title, content, created_at, updated_at) "
+              "VALUES (:title, :content, :created_at, :updated_at)");
+    q.bindValue(":title", title);
+    q.bindValue(":content", content);
+    q.bindValue(":created_at", createdAt.toString());
+    q.bindValue(":updated_at", updatedAt.toString());
+    Database::safeExecPreparedQuery(q);
 }
 
-void SQLNote::update()
+void Note::update() const
 {
     QSqlQuery q;
-    q.prepare("update notes"
-              "set title = :title, content = :content, "
-              "created_at = :created_at, updated_at = :updated_at "
-              "where id = :id");
-    q.bindValue(":id", getId());
-    q.bindValue(":title", getTitle());
-    q.bindValue(":content", getContent());
-    q.bindValue(":created_at", getCreatedAt().toString());
-    q.bindValue(":updated_at", getUpdatedAt().toString());
-    q.exec();
+    q.prepare("UPDATE notes "
+              "SET title = :title, "
+              "content = :content, "
+              "created_at = :created_at, "
+              "updated_at = :updated_at "
+              "WHERE id = :id");
+    q.bindValue(":id", id);
+    q.bindValue(":title", title);
+    q.bindValue(":content", content);
+    q.bindValue(":created_at", createdAt.toString());
+    q.bindValue(":updated_at", updatedAt.toString());
+    Database::safeExecPreparedQuery(q);
+
+    q.prepare("UPDATE relations "
+              "SET parent_id = :parent_id, "
+              "updated_at = :updated_at "
+              "WHERE note_id = :note_id");
+    q.bindValue(":note_id", id);
+    q.bindValue(":parent_id", parentId);
+    q.bindValue(":parent_id", updatedAt.toString());
+    Database::safeExecPreparedQuery(q);
 }
 
-QString SQLNote::toString()
+void Note::remove() const
 {
-    return QString("id: %1, title: %2, content: %3, created_at: %4, updated_at: %5")
-            .arg(QString::number(id))
-            .arg(title)
-            .arg(content)
-            .arg(createdAt.toString())
-            .arg(updatedAt.toString());
+    QSqlQuery q;
+    q.prepare("DELETE FROM notes "
+              "WHERE id = :id");
+    q.bindValue(":id", id);
+    Database::safeExecPreparedQuery(q);
 }
