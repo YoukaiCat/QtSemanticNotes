@@ -19,11 +19,29 @@ private:
 #include "AbstractNote.h"
 
 #include <optional>
+using std::optional;
 
 class RootNote : public AbstractNote
 {
 public:
-    static std::optional<RootNote> getRoot();
+    inline RootNote(RootNote&& other) noexcept
+        : AbstractNote(move(other.id),
+                       move(other.title),
+                       move(other.content),
+                       move(other.createdAt),
+                       move(other.updatedAt))
+    {}
+
+    inline RootNote & operator=(RootNote&& other) noexcept
+    {
+        AbstractNote::operator=(move(other));
+        return *this;
+    }
+
+    RootNote(const RootNote&) = delete;
+    RootNote & operator=(const RootNote&) = delete;
+
+    static optional<RootNote> getRoot();
 
     virtual bool isRoot() const override;
 

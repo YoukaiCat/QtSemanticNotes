@@ -3,21 +3,12 @@
 AbstractNote::AbstractNote()
 {}
 
-AbstractNote::AbstractNote(const Id& id, const QString& title, const QString& content,
-                           const QDateTime& createdAt, const QDateTime& updatedAt)
-    : id(id),
-      title(title),
-      content(content),
-      createdAt(createdAt),
-      updatedAt(updatedAt)
-{}
-
 Id AbstractNote::getId() const
 {
     return id;
 }
 
-void AbstractNote::setId(Id value)
+void AbstractNote::setId(const Id& value)
 {
     id = value;
 }

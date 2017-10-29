@@ -9,17 +9,13 @@
 
 #include "../database/Database.h"
 
+using std::move;
+
 Note::Note()
     : AbstractNote()
 {}
 
-Note::Note(const Id& id, const QString& title, const QString& content,
-           const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
-    : AbstractNote(id, title, content, createdAt, updatedAt),
-      parentId(parentId)
-{}
-
-QList<Note> Note::getAll()
+vector<Note> Note::getAll()
 {
     QSqlQuery q;
     q.prepare("SELECT notes.id, notes.title, notes.content, "
@@ -28,20 +24,19 @@ QList<Note> Note::getAll()
               "WHERE NOT notes.id = 1");
     Database::safeExecPreparedQuery(q);
 
-    QList<Note> notes;
+    vector<Note> notes;
     while (q.next()) {
-        Note note(q.value(0).toUInt(),
+        notes.emplace_back(q.value(0).toUInt(),
             q.value(1).toString(),
             q.value(2).toString(),
             q.value(3).toDateTime(),
             q.value(4).toDateTime(),
             q.value(5).toUInt());
-        notes.append(note);
     }
     return notes;
 }
 
-std::optional<Note> Note::getById(Id id)
+optional<Note> Note::getById(Id id)
 {
     QSqlQuery q;
     q.prepare("SELECT notes.id, notes.title, notes.content, "
@@ -60,7 +55,7 @@ std::optional<Note> Note::getById(Id id)
             q.value(5).toUInt());
         return note;
     } else {
-        return std::nullopt;
+        return {};
     }
 }
 

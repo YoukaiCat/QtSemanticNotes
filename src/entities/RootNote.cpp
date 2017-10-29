@@ -1,5 +1,7 @@
 #include "RootNote.h"
 
+using std::move;
+
 RootUnsupportedActionException::RootUnsupportedActionException(const QString& message)
     : message(message)
 {}
@@ -34,12 +36,11 @@ RootNote::RootNote()
     : AbstractNote()
 {}
 
-RootNote::RootNote(const Id& id, const QString& title, const QString& content,
-                   const QDateTime& createdAt, const QDateTime& updatedAt)
+RootNote::RootNote(const Id& id, const QString& title, const QString& content, const QDateTime& createdAt, const QDateTime& updatedAt)
     : AbstractNote(id, title, content, createdAt, updatedAt)
 {}
 
-std::optional<RootNote> RootNote::getRoot()
+optional<RootNote> RootNote::getRoot()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, content, created_at, updated_at "
@@ -54,7 +55,7 @@ std::optional<RootNote> RootNote::getRoot()
             q.value(4).toDateTime());
         return rootNote;
     } else {
-        return std::nullopt;
+        return {};
     }
 }
 

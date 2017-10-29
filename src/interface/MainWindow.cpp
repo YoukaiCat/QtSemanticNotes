@@ -23,20 +23,44 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
 
     try {
+
         Database db;
         db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
         //db.openDatabase(":memory:");
 
-        QHash<int, TreeItem*> IdToTreeItem;
+        QHash<Id, TreeItem*> idToTreeItem;
 
         RootNote rootNote = RootNote::getRoot().value();
 
-        TreeItem * rootItem = new TreeItem(rootNote.getTitle());
+        TreeItem* rootItem = new TreeItem("Title");
+        rootItem->insertChildren(0, 1, 0);
+        rootItem->child(0)->setData(0, rootNote.getTitle());
 
-        qDebug() << Note::getAll().count();
+        idToTreeItem.insert(rootNote.getId(), rootItem);
+
+        auto notes = Note::getAll();
+
+        for(auto& note : notes) {
+            TreeItem* item = new TreeItem(note.getTitle());
+            idToTreeItem.insert(note.getId(), item);
+        }
+
+        for(auto& note : notes) {
+            if (idToTreeItem.contains(note.getParentId())) {
+                TreeItem * parent = idToTreeItem[note.getParentId()];
+                int count = parent->childCount();
+                parent->insertChildren(count, 1, 0);
+                rootItem->child(count)->setData(0, note.getTitle());
+            } else {
+                QMessageBox::critical(this,
+                    "Tree construction error",
+                    "Cannot find parent item in hashmap, but it should be here");
+            }
+        }
 
         noteTreeModel = new NoteTreeModel(rootItem);
         ui->treeViewNotes->setModel(noteTreeModel);
+
     } catch (OpenDBException e) {
         QMessageBox::critical(this,
             "Error occured while opening or creating database",

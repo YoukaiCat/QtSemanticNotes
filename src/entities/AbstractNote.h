@@ -4,18 +4,47 @@
 #include <QString>
 #include <QDateTime>
 
+using std::move;
+
 typedef quint32 Id;
 
 class AbstractNote
 {
 public:
     explicit AbstractNote();
-    AbstractNote(const Id& id, const QString& title, const QString& content,
-             const QDateTime& createdAt, const QDateTime& updatedAt);
+    inline AbstractNote(const Id& id, const QString& title, const QString& content,
+                 const QDateTime& createdAt, const QDateTime& updatedAt)
+        : id(id),
+          title(title),
+          content(content),
+          createdAt(createdAt),
+          updatedAt(updatedAt)
+    {}
     virtual ~AbstractNote() {}
 
+    inline AbstractNote(AbstractNote&& other) noexcept
+        : id(move(other.id)),
+          title(move(other.title)),
+          content(move(other.content)),
+          createdAt(move(other.createdAt)),
+          updatedAt(move(other.updatedAt))
+    {}
+
+    inline AbstractNote & operator=(AbstractNote&& other) noexcept
+    {
+        id = move(other.id);
+        title = move(other.title);
+        content = move(other.content);
+        createdAt = move(other.createdAt);
+        updatedAt = move(other.updatedAt);
+        return *this;
+    }
+
+    AbstractNote(const AbstractNote&) = delete;
+    AbstractNote & operator=(const AbstractNote&) = delete;
+
     virtual Id getId() const;
-    virtual void setId(Id id);
+    virtual void setId(const Id& id);
 
     virtual QString getTitle() const;
     virtual void setTitle(const QString& title);
