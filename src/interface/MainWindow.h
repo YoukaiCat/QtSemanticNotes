@@ -25,6 +25,8 @@ public slots:
 private:
     Ui::MainWindow* ui;
 
+    unique_ptr<RootNote> rootNote;
+    vector<unique_ptr<Note>> notes;
     NoteTreeModel* noteTreeModel;
 };
 

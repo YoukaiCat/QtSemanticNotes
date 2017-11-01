@@ -5,6 +5,7 @@
 
 #include <optional>
 using std::optional;
+using std::unique_ptr;
 using std::move;
 
 class RootNote : public AbstractNote
@@ -31,7 +32,7 @@ public:
     RootNote(const RootNote&) = delete;
     RootNote & operator=(const RootNote&) = delete;
 
-    static optional<RootNote> getRootNote();
+    static unique_ptr<RootNote> getRootNote();
 
     virtual Id getId() const override;
 

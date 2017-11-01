@@ -15,9 +15,9 @@ using std::variant;
 class NoteTreeItem
 {
 public:
-    explicit NoteTreeItem(const RootNote& note, NoteTreeItem* parent = 0);
-    explicit NoteTreeItem(const Note& note, NoteTreeItem* parent = 0);
-    ~NoteTreeItem();
+    explicit NoteTreeItem(const QString& header);
+    explicit NoteTreeItem(RootNote* note, NoteTreeItem* parent = 0);
+    explicit NoteTreeItem(Note* note, NoteTreeItem* parent = 0);
 
     NoteTreeItem* child(int number);
 
@@ -38,7 +38,8 @@ public:
 
     bool setData(int column, const QVariant& value);
 
-    variant<RootNote, Note> note;
+    QString header;
+    variant<RootNote*, Note*> note;
     QList<NoteTreeItem*> subnotes;
     NoteTreeItem* parentItem;
 };

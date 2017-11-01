@@ -7,7 +7,28 @@
 
 #include <QDebug>
 
-vector<Note> Note::getAll()
+using std::make_unique;
+
+Note::Note(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
+    : AbstractNote(),
+      id(id),
+      title(title),
+      createdAt(createdAt),
+      updatedAt(updatedAt),
+      parentId(parentId)
+{}
+
+Note::Note(const Id& id, const QString& title, const optional<QString>& content, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
+    : AbstractNote(),
+      id(id),
+      title(title),
+      content(content),
+      createdAt(createdAt),
+      updatedAt(updatedAt),
+      parentId(parentId)
+{}
+
+vector<unique_ptr<Note>> Note::getAll()
 {
     QSqlQuery q;
     q.prepare("SELECT notes.id, notes.title, "
@@ -16,18 +37,20 @@ vector<Note> Note::getAll()
               "WHERE NOT notes.id = 1");
     Database::safeExecPreparedQuery(q);
 
-    vector<Note> notes;
+    vector<unique_ptr<Note>> notes;
     while (q.next()) {
-        notes.emplace_back(q.value(0).toUInt(),
-            q.value(1).toString(),
-            q.value(2).toDateTime(),
-            q.value(3).toDateTime(),
-            q.value(4).toUInt());
+        notes.emplace_back(
+                make_unique<Note>(
+                    Note(q.value(0).toUInt(),
+                         q.value(1).toString(),
+                         q.value(2).toDateTime(),
+                         q.value(3).toDateTime(),
+                         q.value(4).toUInt())));
     }
     return notes;
 }
 
-optional<Note> Note::getById(const Id& id)
+optional<unique_ptr<Note>> Note::getById(const Id& id)
 {
     QSqlQuery q;
     q.prepare("SELECT notes.id, notes.title, "
@@ -38,12 +61,12 @@ optional<Note> Note::getById(const Id& id)
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        Note note(q.value(0).toUInt(),
-            q.value(1).toString(),
-            q.value(2).toDateTime(),
-            q.value(3).toDateTime(),
-            q.value(4).toUInt());
-        return note;
+        return make_unique<Note>(
+                    Note(q.value(0).toUInt(),
+                         q.value(1).toString(),
+                         q.value(2).toDateTime(),
+                         q.value(3).toDateTime(),
+                         q.value(4).toUInt()));
     } else {
         return {};
     }
@@ -74,11 +97,10 @@ QString Note::getContent()
                   "WHERE id = :id");
         q.bindValue(":id", id);
         Database::safeExecPreparedQuery(q);
+        q.next();
 
-        if (q.next()) {
-            content = q.value(0).toString();
-            return content.value();
-        }
+        content = q.value(0).toString();
+        return content.value();
     }
 }
 
@@ -119,7 +141,7 @@ QString Note::toString() const
             .arg(parentId);
 }
 
-Note Note::create(const QString& title, const QString& content, const Id& parentId)
+unique_ptr<Note> Note::create(const QString& title, const QString& content, const Id& parentId)
 {
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
@@ -135,17 +157,11 @@ Note Note::create(const QString& title, const QString& content, const Id& parent
         insertNotesQuery.bindValue(":updated_at", now_s);
         Database::safeExecPreparedQuery(insertNotesQuery);
 
-        Id id;
-
         QSqlQuery rowIdQuery;
         rowIdQuery.prepare("SELECT last_insert_rowid()");
         Database::safeExecPreparedQuery(rowIdQuery);
-        if (rowIdQuery.next()) {
-            id = rowIdQuery.value(0).toUInt();
-            return Note(id, title, content, now, now, parentId);
-        } else {
-            throw "";
-        }
+        Id id = rowIdQuery.value(0).toUInt();
+        return make_unique<Note>(Note(id, title, content, now, now, parentId));
 
         QSqlQuery insertRelationsQuery;
         insertRelationsQuery.prepare("INSERT INTO relations (note_id, parent_id, created_at, updated_at) "

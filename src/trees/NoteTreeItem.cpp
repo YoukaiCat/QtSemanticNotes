@@ -1,20 +1,26 @@
 #include "NoteTreeItem.h"
 
-NoteTreeItem::NoteTreeItem(const RootNote& value, NoteTreeItem* parent)
+NoteTreeItem::NoteTreeItem(const QString& value)
 {
-    parentItem = parent;
-    note = value;
+    header = value;
 }
 
-NoteTreeItem::NoteTreeItem(const Note& value, NoteTreeItem* parent)
+NoteTreeItem::NoteTreeItem(RootNote* value, NoteTreeItem* parent)
 {
-    parentItem = parent;
     note = value;
+    parentItem = parent;
+    if (parentItem) {
+        parent->subnotes.append(this);
+    }
 }
 
-NoteTreeItem::~NoteTreeItem()
+NoteTreeItem::NoteTreeItem(Note* value, NoteTreeItem* parent)
 {
-    qDeleteAll(subnotes);
+    note = value;
+    parentItem = parent;
+    if (parentItem) {
+        parent->subnotes.append(this);
+    }
 }
 
 NoteTreeItem* NoteTreeItem::child(int number)
@@ -44,7 +50,7 @@ int NoteTreeItem::columnCount() const
 QVariant NoteTreeItem::data(int column) const
 {
     Q_UNUSED(column)
-    return note;
+    return "DATA";
 }
 
 bool NoteTreeItem::insertChildren(int position, int count, int columns)
@@ -55,8 +61,13 @@ bool NoteTreeItem::insertChildren(int position, int count, int columns)
 
     for (int row = 0; row < count; ++row) {
         //QVariant data(columns);
-        NoteTreeItem* item = new NoteTreeItem(note, this);
-        subnotes.insert(position, item);
+        if (std::holds_alternative<RootNote*>(note)) {
+            NoteTreeItem* item = new NoteTreeItem(std::get<RootNote*>(note), this);
+            subnotes.insert(position, item);
+        } else {
+            NoteTreeItem* item = new NoteTreeItem(std::get<Note*>(note), this);
+            subnotes.insert(position, item);
+        }
     }
 
     return true;
@@ -116,6 +127,6 @@ bool NoteTreeItem::setData(int column, const QVariant& value)
 //    if (column < 0 || column >= 1)
 //        return false;
 
-    note = value;
+    //note = value;
     return true;
 }

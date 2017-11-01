@@ -42,9 +42,11 @@ public:
     bool removeRows(int position, int rows,
                     const QModelIndex& parent = QModelIndex()) override;
 
+    Qt::DropActions supportedDropActions() const override;
+
 private:
-    //void setupModelData(const QStringList& lines, TreeItem* parent);
-    NoteTreeItem* getItem(const QModelIndex& index) const;
+//    void setupModelData(const QStringList& lines, TreeItem* parent);
+//    NoteTreeItem* getItem(const QModelIndex& index) const;
 
     NoteTreeItem* rootItem;
 };

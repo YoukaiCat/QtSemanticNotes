@@ -2,29 +2,35 @@
 
 #include "../database/Database.h"
 
-using std::move;
-
 #include <QSqlQuery>
 #include <QSqlRecord>
 
 #include <QDebug>
 
-optional<RootNote> RootNote::getRootNote()
+using std::make_unique;
+
+RootNote::RootNote(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt)
+    : AbstractNote(),
+      id(id),
+      title(title),
+      createdAt(createdAt),
+      updatedAt(updatedAt)
+{}
+
+unique_ptr<RootNote> RootNote::getRootNote()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at "
               "FROM notes WHERE id = 1");
     Database::safeExecPreparedQuery(q);
+    q.next();
 
-    if (q.next()) {
-        RootNote rootNote(q.value(0).toUInt(),
-            q.value(1).toString(),
-            q.value(2).toDateTime(),
-            q.value(3).toDateTime());
-        return rootNote;
-    } else {
-        return {};
-    }
+    return make_unique<RootNote>(
+                RootNote(
+                    q.value(0).toUInt(),
+                    q.value(1).toString(),
+                    q.value(2).toDateTime(),
+                    q.value(3).toDateTime()));
 }
 
 Id RootNote::getId() const
@@ -51,11 +57,10 @@ QString RootNote::getContent()
         q.prepare("SELECT content FROM notes "
                   "WHERE id = 1");
         Database::safeExecPreparedQuery(q);
+        q.next();
 
-        if (q.next()) {
-            content = q.value(0).toString();
-            return content.value();
-        }
+        content = q.value(0).toString();
+        return content.value();
     }
 }
 

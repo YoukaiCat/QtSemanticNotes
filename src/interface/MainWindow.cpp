@@ -22,58 +22,38 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    try {
+//    try {
 
         Database db;
         //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
         db.openDatabase(":memory:");
 
-        QHash<Id, TreeItem*> idToTreeItem;
+        rootNote = RootNote::getRootNote();
 
-        RootNote rootNote = RootNote::getRoot().value();
+        QHash<Id, NoteTreeItem*> idToTreeItem;
 
-        TreeItem* rootItem = new TreeItem("Title");
-        rootItem->insertChildren(0, 1, 0);
-        rootItem->child(0)->setData(0, rootNote.getTitle());
+        NoteTreeItem* headerItem = new NoteTreeItem("Title");
 
-        idToTreeItem.insert(rootNote.getId(), rootItem);
+        NoteTreeItem* rootItem = new NoteTreeItem(rootNote.get(), headerItem);
+
+        idToTreeItem.insert(rootNote->getId(), rootItem);
 
         auto notes = Note::getAll();
 
         for(auto& note : notes) {
-            TreeItem* item = new TreeItem(note.getTitle());
-            idToTreeItem.insert(note.getId(), item);
+            NoteTreeItem* item = new NoteTreeItem(note.get());
+            idToTreeItem.insert(note->getId(), item);
         }
 
         for(auto& note : notes) {
-            if (idToTreeItem.contains(note.getParentId())) {
-                TreeItem * parent = idToTreeItem[note.getParentId()];
-                int count = parent->childCount();
-                parent->insertChildren(count, 1, 0);
-                rootItem->child(count)->setData(0, note.getTitle());
-            } else {
-                QMessageBox::critical(this,
-                    "Tree construction error",
-                    "Cannot find parent item in hashmap, but it should be here");
-            }
+            NoteTreeItem* item = idToTreeItem[note->getId()];
+            NoteTreeItem* parent = idToTreeItem[note->getParentId()];
+            parent->subnotes.append(item);
+            item->parentItem = parent;
         }
 
-        noteTreeModel = new NoteTreeModel(rootItem);
+        noteTreeModel = new NoteTreeModel(headerItem);
         ui->treeViewNotes->setModel(noteTreeModel);
-
-    } catch (OpenDBException e) {
-        QMessageBox::critical(this,
-            "Error occured while opening or creating database",
-            e.getMessage());
-    } catch (QueryException e) {
-        QMessageBox::critical(this,
-            "SQL Query error occured",
-            e.getMessage());
-    } catch (RootUnsupportedActionException e) {
-        QMessageBox::critical(this,
-            "Internal error",
-            e.getMessage());
-    }
 }
 
 MainWindow::~MainWindow()

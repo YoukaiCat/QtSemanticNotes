@@ -7,6 +7,7 @@
 #include <optional>
 using std::vector;
 using std::optional;
+using std::unique_ptr;
 using std::move;
 
 class Note : public AbstractNote
@@ -36,8 +37,8 @@ public:
     Note(const Note&) = delete;
     Note & operator=(const Note&) = delete;
 
-    static vector<Note> getAll();
-    static optional<Note> getById(const Id& id);
+    static vector<unique_ptr<Note>> getAll();
+    static optional<unique_ptr<Note>> getById(const Id& id);
 
     virtual Id getId() const override;
 
@@ -55,9 +56,9 @@ public:
 
     virtual QString toString() const override;
 
-    static Note create(const QString& title,
-                       const QString& content,
-                       const Id& parentId);
+    static unique_ptr<Note> create(const QString& title,
+                                   const QString& content,
+                                   const Id& parentId);
     void update();
     void remove();
 
@@ -73,29 +74,14 @@ private:
          const QString& title,
          const QDateTime& createdAt,
          const QDateTime& updatedAt,
-         const Id& parentId)
-        : AbstractNote(),
-          id(id),
-          title(title),
-          createdAt(createdAt),
-          updatedAt(updatedAt),
-          parentId(parentId)
-    {}
+         const Id& parentId);
 
     Note(const Id& id,
          const QString& title,
          const optional<QString>& content,
          const QDateTime& createdAt,
          const QDateTime& updatedAt,
-         const Id& parentId)
-        : AbstractNote(),
-          id(id),
-          title(title),
-          content(content),
-          createdAt(createdAt),
-          updatedAt(updatedAt),
-          parentId(parentId)
-    {}
+         const Id& parentId);
 };
 
 #endif // NOTE_H
