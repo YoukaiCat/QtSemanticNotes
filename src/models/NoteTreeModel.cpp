@@ -1,9 +1,9 @@
 #include "NoteTreeModel.h"
-#include "../trees/TreeItem.h"
+#include "../trees/NoteTreeItem.h"
 
 #include <QStringList>
 
-NoteTreeModel::NoteTreeModel(TreeItem* rootItem, QObject* parent)
+NoteTreeModel::NoteTreeModel(NoteTreeItem* rootItem, QObject* parent)
     : QAbstractItemModel(parent),
       rootItem(rootItem)
 {}
@@ -27,7 +27,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
-    TreeItem* item = getItem(index);
+    NoteTreeItem* item = getItem(index);
 
     return item->data(index.column());
 }
@@ -40,10 +40,10 @@ Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
     return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
 }
 
-TreeItem* NoteTreeModel::getItem(const QModelIndex& index) const
+NoteTreeItem* NoteTreeModel::getItem(const QModelIndex& index) const
 {
     if (index.isValid()) {
-        TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+        NoteTreeItem* item = static_cast<NoteTreeItem*>(index.internalPointer());
         if (item)
             return item;
     }
@@ -63,9 +63,9 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
     if (parent.isValid() && parent.column() != 0)
         return QModelIndex();
 
-    TreeItem* parentItem = getItem(parent);
+    NoteTreeItem* parentItem = getItem(parent);
 
-    TreeItem* childItem = parentItem->child(row);
+    NoteTreeItem* childItem = parentItem->child(row);
     if (childItem)
         return createIndex(row, column, childItem);
     else
@@ -99,7 +99,7 @@ bool NoteTreeModel::removeColumns(int position, int columns, const QModelIndex& 
 
 bool NoteTreeModel::insertRows(int position, int rows, const QModelIndex &parent)
 {
-    TreeItem* parentItem = getItem(parent);
+    NoteTreeItem* parentItem = getItem(parent);
     bool success;
 
     beginInsertRows(parent, position, position + rows - 1);
@@ -111,7 +111,7 @@ bool NoteTreeModel::insertRows(int position, int rows, const QModelIndex &parent
 
 bool NoteTreeModel::removeRows(int position, int rows, const QModelIndex& parent)
 {
-    TreeItem* parentItem = getItem(parent);
+    NoteTreeItem* parentItem = getItem(parent);
     bool success = true;
 
     beginRemoveRows(parent, position, position + rows - 1);
@@ -126,8 +126,8 @@ QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    TreeItem* childItem = getItem(index);
-    TreeItem* parentItem = childItem->parent();
+    NoteTreeItem* childItem = getItem(index);
+    NoteTreeItem* parentItem = childItem->parent();
 
     if (parentItem == rootItem)
         return QModelIndex();
@@ -137,7 +137,7 @@ QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
 
 int NoteTreeModel::rowCount(const QModelIndex& parent) const
 {
-    TreeItem* parentItem = getItem(parent);
+    NoteTreeItem* parentItem = getItem(parent);
 
     return parentItem->childCount();
 }
@@ -147,7 +147,7 @@ bool NoteTreeModel::setData(const QModelIndex& index, const QVariant& value, int
     if (role != Qt::EditRole)
         return false;
 
-    TreeItem* item = getItem(index);
+    NoteTreeItem* item = getItem(index);
     bool result = item->setData(index.column(), value);
 
     if (result)

@@ -4,77 +4,48 @@
 #include <QString>
 #include <QDateTime>
 
-using std::move;
-
 typedef quint32 Id;
 
 class AbstractNote
 {
 public:
     explicit AbstractNote();
-    inline AbstractNote(const Id& id, const QString& title, const QString& content,
-                 const QDateTime& createdAt, const QDateTime& updatedAt)
-        : id(id),
-          title(title),
-          content(content),
-          createdAt(createdAt),
-          updatedAt(updatedAt)
-    {}
-    virtual ~AbstractNote() {}
+    virtual ~AbstractNote();
 
-    inline AbstractNote(AbstractNote&& other) noexcept
-        : id(move(other.id)),
-          title(move(other.title)),
-          content(move(other.content)),
-          createdAt(move(other.createdAt)),
-          updatedAt(move(other.updatedAt))
-    {}
+//    explicit BaseNote();
+//    inline BaseNote(const QString& title, const QString& content)
+//        : title(title),
+//          content(content)
+//    {}
+//    virtual ~BaseNote() {}
 
-    inline AbstractNote & operator=(AbstractNote&& other) noexcept
-    {
-        id = move(other.id);
-        title = move(other.title);
-        content = move(other.content);
-        createdAt = move(other.createdAt);
-        updatedAt = move(other.updatedAt);
-        return *this;
-    }
+//    inline BaseNote(BaseNote&& other) noexcept
+//        : title(move(other.title)),
+//          content(move(other.content))
+//    {}
 
-    AbstractNote(const AbstractNote&) = delete;
-    AbstractNote & operator=(const AbstractNote&) = delete;
+//    inline BaseNote & operator=(BaseNote&& other) noexcept
+//    {
+//        title = move(other.title);
+//        content = move(other.content);
+//        return *this;
+//    }
 
-    virtual Id getId() const;
-    virtual void setId(const Id& id);
+//    AbstractNote(const AbstractNote&) = delete;
+//    AbstractNote & operator=(const AbstractNote&) = delete;
 
-    virtual QString getTitle() const;
-    virtual void setTitle(const QString& title);
+    virtual Id getId() const = 0;
 
-    virtual QString getContent() const;
-    virtual void setContent(const QString& content);
+    virtual QString getTitle() const = 0;
+    virtual void setTitle(const QString& title) = 0;
 
-    virtual QDateTime getCreatedAt() const;
-    virtual void setCreatedAt(const QDateTime& datetime);
+    virtual QString getContent() = 0;
+    virtual void setContent(const QString& content) = 0;
 
-    virtual QDateTime getUpdatedAt() const;
-    virtual void setUpdatedAt(const QDateTime& datetime);
+    virtual QDateTime getCreatedAt() const = 0;
+    virtual QDateTime getUpdatedAt() const = 0;
 
-    virtual bool isRoot() const = 0;
-
-    virtual Id getParentId() const = 0;
-    virtual void setParentId(const Id& value) = 0;
-
-    virtual void create() const = 0;
-    virtual void update() const = 0;
-    virtual void remove() const = 0;
-
-    virtual QString toString() const;
-
-protected:
-    Id id;
-    QString title;
-    QString content;
-    QDateTime createdAt;
-    QDateTime updatedAt;
+    virtual QString toString() const = 0;
 };
 
-#endif // ABSTRACTNOTE_H
+#endif // BASENOTE_H

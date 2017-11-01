@@ -7,29 +7,28 @@
 #include <optional>
 using std::vector;
 using std::optional;
+using std::move;
 
 class Note : public AbstractNote
 {
 public:
-    explicit Note();
-    inline Note(const Id& id, const QString& title, const QString& content,
-         const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
-        : AbstractNote(id, title, content, createdAt, updatedAt),
-          parentId(parentId)
-    {}
-
     inline Note(Note&& other) noexcept
-        : AbstractNote(move(other.id),
-                       move(other.title),
-                       move(other.content),
-                       move(other.createdAt),
-                       move(other.updatedAt)),
-          parentId(other.parentId)
+        : AbstractNote(),
+          id(move(other.id)),
+          title(move(other.title)),
+          content(move(other.content)),
+          createdAt(move(other.createdAt)),
+          updatedAt(move(other.updatedAt)),
+          parentId(move(other.parentId))
     {}
 
     inline Note & operator=(Note&& other) noexcept
     {
-        AbstractNote::operator=(move(other));
+        id = move(other.id);
+        title = move(other.title);
+        content = move(other.content);
+        createdAt = move(other.createdAt);
+        updatedAt = move(other.updatedAt);
         parentId = move(other.parentId);
         return *this;
     }
@@ -38,19 +37,65 @@ public:
     Note & operator=(const Note&) = delete;
 
     static vector<Note> getAll();
-    static optional<Note> getById(Id id);
+    static optional<Note> getById(const Id& id);
 
-    virtual bool isRoot() const override;
+    virtual Id getId() const override;
 
-    virtual Id getParentId() const override;
-    virtual void setParentId(const Id& value) override;
+    virtual QString getTitle() const override;
+    virtual void setTitle(const QString& title) override;
 
-    virtual void create() const override;
-    virtual void update() const override;
-    virtual void remove() const override;
+    virtual QString getContent() override;
+    virtual void setContent(const QString& content) override;
+
+    virtual QDateTime getCreatedAt() const override;
+    virtual QDateTime getUpdatedAt() const override;
+
+    Id getParentId() const;
+    void setParentId(const Id& value);
+
+    virtual QString toString() const override;
+
+    static Note create(const QString& title,
+                       const QString& content,
+                       const Id& parentId);
+    void update();
+    void remove();
 
 private:
+    Id id;
+    QString title;
+    optional<QString> content;
+    QDateTime createdAt;
+    QDateTime updatedAt;
     Id parentId;
+
+    Note(const Id& id,
+         const QString& title,
+         const QDateTime& createdAt,
+         const QDateTime& updatedAt,
+         const Id& parentId)
+        : AbstractNote(),
+          id(id),
+          title(title),
+          createdAt(createdAt),
+          updatedAt(updatedAt),
+          parentId(parentId)
+    {}
+
+    Note(const Id& id,
+         const QString& title,
+         const optional<QString>& content,
+         const QDateTime& createdAt,
+         const QDateTime& updatedAt,
+         const Id& parentId)
+        : AbstractNote(),
+          id(id),
+          title(title),
+          content(content),
+          createdAt(createdAt),
+          updatedAt(updatedAt),
+          parentId(parentId)
+    {}
 };
 
 #endif // NOTE_H

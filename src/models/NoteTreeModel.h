@@ -1,9 +1,7 @@
 #ifndef NOTENoteTreeModel_H
 #define NOTENoteTreeModel_H
 
-#include <QAbstractItemModel>
-
-#include "../trees/TreeItem.h"
+#include "../trees/NoteTreeItem.h"
 
 #include <QAbstractItemModel>
 #include <QModelIndex>
@@ -14,7 +12,7 @@ class NoteTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    NoteTreeModel(TreeItem* rootItem, QObject* parent = 0);
+    NoteTreeModel(NoteTreeItem* rootItem, QObject* parent = 0);
     ~NoteTreeModel();
 
     QVariant data(const QModelIndex& index, int role) const override;
@@ -46,9 +44,9 @@ public:
 
 private:
     //void setupModelData(const QStringList& lines, TreeItem* parent);
-    TreeItem* getItem(const QModelIndex& index) const;
+    NoteTreeItem* getItem(const QModelIndex& index) const;
 
-    TreeItem* rootItem;
+    NoteTreeItem* rootItem;
 };
 
 

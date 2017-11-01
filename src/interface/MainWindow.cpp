@@ -25,8 +25,8 @@ MainWindow::MainWindow(QWidget* parent) :
     try {
 
         Database db;
-        db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-        //db.openDatabase(":memory:");
+        //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+        db.openDatabase(":memory:");
 
         QHash<Id, TreeItem*> idToTreeItem;
 
