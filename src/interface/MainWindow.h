@@ -27,7 +27,7 @@ private:
 
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
-    NoteTreeModel* noteTreeModel;
+    unique_ptr<NoteTreeModel> noteTreeModel;
 };
 
 #endif // MAINWINDOW_H

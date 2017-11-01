@@ -22,38 +22,35 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-//    try {
+    Database db;
+    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    db.openDatabase(":memory:");
 
-        Database db;
-        //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-        db.openDatabase(":memory:");
+    rootNote = RootNote::getRootNote();
 
-        rootNote = RootNote::getRootNote();
+    QHash<Id, NoteTreeItem*> idToTreeItem;
 
-        QHash<Id, NoteTreeItem*> idToTreeItem;
+    NoteTreeItem* headerItem = new NoteTreeItem();
 
-        NoteTreeItem* headerItem = new NoteTreeItem("Title");
+    NoteTreeItem* rootItem = new NoteTreeItem(rootNote.get(), headerItem);
 
-        NoteTreeItem* rootItem = new NoteTreeItem(rootNote.get(), headerItem);
+    idToTreeItem.insert(rootNote->getId(), rootItem);
 
-        idToTreeItem.insert(rootNote->getId(), rootItem);
+    notes = Note::getAll();
 
-        auto notes = Note::getAll();
+    for(auto& note : notes) {
+        NoteTreeItem* item = new NoteTreeItem(note.get());
+        idToTreeItem.insert(note->getId(), item);
+    }
 
-        for(auto& note : notes) {
-            NoteTreeItem* item = new NoteTreeItem(note.get());
-            idToTreeItem.insert(note->getId(), item);
-        }
+    for(auto& note : notes) {
+        NoteTreeItem* item = idToTreeItem[note->getId()];
+        NoteTreeItem* parent = idToTreeItem[note->getParentId()];
+        parent->addSubnote(item);
+    }
 
-        for(auto& note : notes) {
-            NoteTreeItem* item = idToTreeItem[note->getId()];
-            NoteTreeItem* parent = idToTreeItem[note->getParentId()];
-            parent->subnotes.append(item);
-            item->parentItem = parent;
-        }
-
-        noteTreeModel = new NoteTreeModel(headerItem);
-        ui->treeViewNotes->setModel(noteTreeModel);
+    noteTreeModel = std::make_unique<NoteTreeModel>(headerItem);
+    ui->treeViewNotes->setModel(noteTreeModel.get());
 }
 
 MainWindow::~MainWindow()

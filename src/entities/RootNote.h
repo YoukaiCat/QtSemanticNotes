@@ -4,6 +4,7 @@
 #include "AbstractNote.h"
 
 #include <optional>
+#include <memory>
 using std::optional;
 using std::unique_ptr;
 using std::move;

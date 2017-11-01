@@ -11,35 +11,23 @@
 #include <variant>
 using std::vector;
 using std::variant;
+using std::monostate;
 
 class NoteTreeItem
 {
 public:
-    explicit NoteTreeItem(const QString& header);
+    explicit NoteTreeItem(NoteTreeItem* parent = 0);
     explicit NoteTreeItem(RootNote* note, NoteTreeItem* parent = 0);
     explicit NoteTreeItem(Note* note, NoteTreeItem* parent = 0);
 
-    NoteTreeItem* child(int number);
+    void addSubnote(NoteTreeItem* note);
 
-    int childCount() const;
-    int columnCount() const;
-
-    QVariant data(int column) const;
-
-    bool insertChildren(int position, int count, int columns);
-    bool insertColumns(int position, int columns);
-
-    NoteTreeItem* parent();
-
-    bool removeChildren(int position, int count);
-    bool removeColumns(int position, int columns);
+//    bool insertChildren(int position, int count, int columns);
+//    bool removeChildren(int position, int count);
 
     int childNumber() const;
 
-    bool setData(int column, const QVariant& value);
-
-    QString header;
-    variant<RootNote*, Note*> note;
+    variant<monostate, RootNote*, Note*> note;
     QList<NoteTreeItem*> subnotes;
     NoteTreeItem* parentItem;
 };

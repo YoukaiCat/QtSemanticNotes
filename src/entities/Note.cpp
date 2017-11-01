@@ -146,6 +146,8 @@ unique_ptr<Note> Note::create(const QString& title, const QString& content, cons
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
 
+    Id id;
+
     QSqlDatabase::database().transaction();
     try {
         QSqlQuery insertNotesQuery;
@@ -160,8 +162,7 @@ unique_ptr<Note> Note::create(const QString& title, const QString& content, cons
         QSqlQuery rowIdQuery;
         rowIdQuery.prepare("SELECT last_insert_rowid()");
         Database::safeExecPreparedQuery(rowIdQuery);
-        Id id = rowIdQuery.value(0).toUInt();
-        return make_unique<Note>(Note(id, title, content, now, now, parentId));
+        id = rowIdQuery.value(0).toUInt();
 
         QSqlQuery insertRelationsQuery;
         insertRelationsQuery.prepare("INSERT INTO relations (note_id, parent_id, created_at, updated_at) "
@@ -177,6 +178,7 @@ unique_ptr<Note> Note::create(const QString& title, const QString& content, cons
         QSqlDatabase::database().rollback();
         throw e;
     }
+    return make_unique<Note>(Note(id, title, content, now, now, parentId));
 }
 
 void Note::update()

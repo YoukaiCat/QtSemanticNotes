@@ -26,34 +26,31 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
 
     NoteTreeItem* item = static_cast<NoteTreeItem*>(index.internalPointer());
 
-    //return item->note;
-    return "";
+    try {
+        if (std::holds_alternative<monostate>(item->note)) {
+            return QVariant();
+        } else if (std::holds_alternative<RootNote*>(item->note)) {
+            return std::get<RootNote*>(item->note)->getTitle();//QVariant(QString::number((long int)std::get<RootNote*>(item->note)));
+        } else {
+            return std::get<Note*>(item->note)->getTitle();//QVariant(QString::number((long int)std::get<Note*>(item->note)));//QVariant(QString::number((item->note).index())); //std::get<Note*>(item->note)->getTitle()
+        }
+    } catch (const std::bad_variant_access& e) {
+        return QVariant();
+    }
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
         return 0;
-
     return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
 }
-
-//NoteTreeItem* NoteTreeModel::getItem(const QModelIndex& index) const
-//{
-//    if (index.isValid()) {
-//        NoteTreeItem* item = static_cast<NoteTreeItem*>(index.internalPointer());
-//        if (item)
-//            return item;
-//    }
-//    return rootItem;
-//}
 
 QVariant NoteTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     Q_UNUSED(section)
-//    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-//        return rootItem->note;
-
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
+        return "Title";
     return QVariant();
 }
 
@@ -70,7 +67,7 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
         parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
     }
 
-    NoteTreeItem* childItem = parentItem->child(row);
+    NoteTreeItem* childItem = parentItem->subnotes.value(row);
     if (childItem) {
         return createIndex(row, column, childItem);
     } else {
@@ -98,24 +95,31 @@ bool NoteTreeModel::insertRows(int position, int rows, const QModelIndex &parent
 {
     NoteTreeItem* parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
 
-    beginInsertRows(parent, position, position + rows - 1);
-    bool success = parentItem->insertChildren(position, rows, rootItem->columnCount());
-    endInsertRows();
+    if (position < 0 || position > parentItem->subnotes.size())
+        return false;
 
-    return success;
+    beginInsertRows(parent, position, position + rows - 1);
+    for (int row = 0; row < rows; ++row) {
+        NoteTreeItem* item = new NoteTreeItem(parentItem);
+        parentItem->subnotes.insert(position, item);
+    }
+    endInsertRows();
+    return true;
 }
 
 bool NoteTreeModel::removeRows(int position, int rows, const QModelIndex& parent)
 {
     NoteTreeItem* parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
 
+    if (position < 0 || position + rows > parentItem->subnotes.size())
+        return false;
+
     beginRemoveRows(parent, position, position + rows - 1);
-    bool success = parentItem->removeChildren(position, rows);
+    for (int row = 0; row < rows; ++row)
+        delete parentItem->subnotes.takeAt(position);
     endRemoveRows();
-
-    return success;
+    return true;
 }
-
 
 QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
 {
