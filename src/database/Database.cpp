@@ -272,10 +272,14 @@ void Database::defineSchema()
     safeExecQuery("insert into application (name, database_version)"
         "values ('QtSemanticNotes', '1.0')");
 
-    safeExecQuery("insert into notes (title) values ('test')");
-    safeExecQuery("insert into notes (title) values ('test1')");
+    safeExecQuery("insert into notes (title) values ('1 test')");
+    safeExecQuery("insert into notes (title) values ('2 test')");
     safeExecQuery("insert into relations (note_id, parent_id) values (2, 1)");
     safeExecQuery("insert into relations (note_id, parent_id) values (3, 2)");
+    safeExecQuery("insert into notes (title) values ('1-1 test')");
+    safeExecQuery("insert into notes (title) values ('2-2 test3')");
+    safeExecQuery("insert into relations (note_id, parent_id) values (4, 1)");
+    safeExecQuery("insert into relations (note_id, parent_id) values (5, 4)");
     safeExecQuery("insert into aliases (alias, note_id) values ('a b c', 2)");
     safeExecQuery("insert into aliases (alias, note_id) values ('c d e', 2)");
     safeExecQuery("insert into aliases (alias, note_id) values ('f g h', 2)");

@@ -180,6 +180,9 @@
               <property name="dragDropMode">
                <enum>QAbstractItemView::DragOnly</enum>
               </property>
+              <property name="headerHidden">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
            </layout>

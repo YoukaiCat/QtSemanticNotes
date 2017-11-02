@@ -202,7 +202,7 @@ bool NoteTreeModel::dropMimeData(const QMimeData* data,
 
         int newRow = parent->subnotes.count();
         beginInsertRows(parentIndex, newRow, newRow);
-            parent->addSubnote(note);
+            parent->addSubnoteAndUpdateParent(note);
         endInsertRows();
     }
 

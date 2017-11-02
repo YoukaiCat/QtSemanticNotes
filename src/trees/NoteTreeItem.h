@@ -23,6 +23,8 @@ public:
 
     void addSubnote(NoteTreeItem* note);
 
+    void addSubnoteAndUpdateParent(NoteTreeItem* note);
+
     int subnoteNumber() const;
 
     NoteTreeItem* getSubnote(const int& index) const;

@@ -33,6 +33,21 @@ void NoteTreeItem::addSubnote(NoteTreeItem* note)
     note->parentItem = this;
 }
 
+void NoteTreeItem::addSubnoteAndUpdateParent(NoteTreeItem* noteItem)
+{
+    addSubnote(noteItem);
+    if (holds_alternative<Note*>(noteItem->note)) {
+        Note* note = get<Note*>(noteItem->note);
+        if (holds_alternative<Note*>(this->note)) {
+            uint id = get<Note*>(this->note)->getId();
+            note->setParentId(id);
+        } else {
+            uint id = get<RootNote*>(this->note)->getId();
+            note->setParentId(id);
+        }
+    }
+}
+
 int NoteTreeItem::subnoteNumber() const
 {
     if (parentItem) {
