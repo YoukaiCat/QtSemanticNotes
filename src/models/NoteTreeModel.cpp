@@ -1,5 +1,8 @@
 #include "NoteTreeModel.h"
 
+#include <QMimeData>
+#include <QDataStream>
+
 NoteTreeModel::NoteTreeModel(NoteTreeItem* rootItem, QObject* parent)
     : QAbstractItemModel(parent),
       rootItem(rootItem)
@@ -24,26 +27,17 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    NoteTreeItem* item = static_cast<NoteTreeItem*>(index.internalPointer());
-
-    try {
-        if (std::holds_alternative<monostate>(item->note)) {
-            return QVariant();
-        } else if (std::holds_alternative<RootNote*>(item->note)) {
-            return std::get<RootNote*>(item->note)->getTitle();//QVariant(QString::number((long int)std::get<RootNote*>(item->note)));
-        } else {
-            return std::get<Note*>(item->note)->getTitle();//QVariant(QString::number((long int)std::get<Note*>(item->note)));//QVariant(QString::number((item->note).index())); //std::get<Note*>(item->note)->getTitle()
-        }
-    } catch (const std::bad_variant_access& e) {
-        return QVariant();
-    }
+    return itemFromIndex(index)->getNoteTitle();
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
         return 0;
-    return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+
+    return Qt::ItemIsDragEnabled |
+           Qt::ItemIsDropEnabled |
+           QAbstractItemModel::flags(index);
 }
 
 QVariant NoteTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -51,6 +45,7 @@ QVariant NoteTreeModel::headerData(int section, Qt::Orientation orientation, int
     Q_UNUSED(section)
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
         return "Title";
+
     return QVariant();
 }
 
@@ -64,61 +59,15 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
     if (!parent.isValid()) {
         parentItem = rootItem;
     } else {
-        parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
+        parentItem = itemFromIndex(parent);
     }
 
-    NoteTreeItem* childItem = parentItem->subnotes.value(row);
-    if (childItem) {
-        return createIndex(row, column, childItem);
+    NoteTreeItem* note = parentItem->getSubnote(row);
+    if (note) {
+        return createIndex(row, column, note);
     } else {
         return QModelIndex();
     }
-}
-
-bool NoteTreeModel::insertColumns(int position, int columns, const QModelIndex& parent)
-{
-    Q_UNUSED(position)
-    Q_UNUSED(columns)
-    Q_UNUSED(parent)
-    return false;
-}
-
-bool NoteTreeModel::removeColumns(int position, int columns, const QModelIndex& parent)
-{
-    Q_UNUSED(position)
-    Q_UNUSED(columns)
-    Q_UNUSED(parent)
-    return false;
-}
-
-bool NoteTreeModel::insertRows(int position, int rows, const QModelIndex &parent)
-{
-    NoteTreeItem* parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
-
-    if (position < 0 || position > parentItem->subnotes.size())
-        return false;
-
-    beginInsertRows(parent, position, position + rows - 1);
-    for (int row = 0; row < rows; ++row) {
-        NoteTreeItem* item = new NoteTreeItem(parentItem);
-        parentItem->subnotes.insert(position, item);
-    }
-    endInsertRows();
-    return true;
-}
-
-bool NoteTreeModel::removeRows(int position, int rows, const QModelIndex& parent)
-{
-    NoteTreeItem* parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
-
-    if (position < 0 || position + rows > parentItem->subnotes.size())
-        return false;
-
-    beginRemoveRows(parent, position, position + rows - 1);
-    for (int row = 0; row < rows; ++row)
-        delete parentItem->subnotes.takeAt(position);
-    endRemoveRows();
-    return true;
 }
 
 QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
@@ -126,13 +75,13 @@ QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    NoteTreeItem* childItem = static_cast<NoteTreeItem*>(index.internalPointer());
+    NoteTreeItem* childItem = itemFromIndex(index);
     NoteTreeItem* parentItem = childItem->parentItem;
 
     if (parentItem == rootItem)
         return QModelIndex();
 
-    return createIndex(parentItem->childNumber(), 0, parentItem);
+    return createIndex(parentItem->subnoteNumber(), 0, parentItem);
 }
 
 int NoteTreeModel::rowCount(const QModelIndex& parent) const
@@ -144,7 +93,7 @@ int NoteTreeModel::rowCount(const QModelIndex& parent) const
     if (!parent.isValid()) {
         parentItem = rootItem;
     } else {
-        parentItem = static_cast<NoteTreeItem*>(parent.internalPointer());
+        parentItem = itemFromIndex(parent);
     }
 
     return parentItem->subnotes.count();
@@ -159,17 +108,82 @@ bool NoteTreeModel::setData(const QModelIndex& index,
     return false;
 }
 
-bool NoteTreeModel::setHeaderData(int section, Qt::Orientation orientation,
-                                  const QVariant& value, int role)
-{
-    Q_UNUSED(section)
-    Q_UNUSED(orientation)
-    Q_UNUSED(value)
-    Q_UNUSED(role)
-    return false;
-}
-
 Qt::DropActions NoteTreeModel::supportedDropActions() const
 {
     return Qt::MoveAction;
+}
+
+QStringList NoteTreeModel::mimeTypes() const
+{
+    QStringList types;
+    types << "application/note";
+    return types;
+}
+
+QMimeData* NoteTreeModel::mimeData(const QModelIndexList& indexes) const
+{
+    QMimeData* mimeData = new QMimeData();
+    QByteArray encodedData;
+
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+    for(const QModelIndex& index : indexes) {
+        if (index.isValid()) {
+            NoteTreeItem* note = itemFromIndex(index);
+            quintptr intptr = reinterpret_cast<quintptr>(note);
+            stream << intptr;
+        }
+    }
+
+    mimeData->setData("application/note", encodedData);
+    return mimeData;
+}
+
+bool NoteTreeModel::dropMimeData(const QMimeData* data,
+                                 Qt::DropAction action,
+                                 int row, int column,
+                                 const QModelIndex& parentIndex)
+{
+    Q_UNUSED(row)
+
+    if (action == Qt::IgnoreAction)
+        return true;
+
+    if (!data->hasFormat("application/note"))
+        return false;
+
+    if (column > 0)
+        return false;
+
+    if (!parentIndex.isValid())
+        return false;
+
+    QByteArray encodedData = data->data("application/note");
+    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+
+    while (!stream.atEnd()) {
+        quintptr intptr;
+        stream >> intptr;
+
+        NoteTreeItem* note = reinterpret_cast<NoteTreeItem*>(intptr);
+        NoteTreeItem* parent = itemFromIndex(parentIndex);
+
+        QModelIndex oldParent = createIndex(0, 0, note->parentItem);
+        int oldRow = note->subnoteNumber();
+        beginRemoveRows(oldParent, oldRow, oldRow);
+            note->parentItem->subnotes.removeAt(oldRow);
+        endRemoveRows();
+
+        int newRow = parent->subnotes.count();
+        beginInsertRows(parentIndex, newRow, newRow);
+            parent->addSubnote(note);
+        endInsertRows();
+    }
+
+    return true;
+}
+
+inline NoteTreeItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
+{
+    return static_cast<NoteTreeItem*>(index.internalPointer());
 }

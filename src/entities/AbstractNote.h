@@ -4,35 +4,13 @@
 #include <QString>
 #include <QDateTime>
 
-typedef quint32 Id;
+typedef uint Id;
 
 class AbstractNote
 {
 public:
     explicit AbstractNote();
     virtual ~AbstractNote();
-
-//    explicit BaseNote();
-//    inline BaseNote(const QString& title, const QString& content)
-//        : title(title),
-//          content(content)
-//    {}
-//    virtual ~BaseNote() {}
-
-//    inline BaseNote(BaseNote&& other) noexcept
-//        : title(move(other.title)),
-//          content(move(other.content))
-//    {}
-
-//    inline BaseNote & operator=(BaseNote&& other) noexcept
-//    {
-//        title = move(other.title);
-//        content = move(other.content);
-//        return *this;
-//    }
-
-//    AbstractNote(const AbstractNote&) = delete;
-//    AbstractNote & operator=(const AbstractNote&) = delete;
 
     virtual Id getId() const = 0;
 

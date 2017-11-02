@@ -19,13 +19,15 @@ public:
     explicit NoteTreeItem(NoteTreeItem* parent = 0);
     explicit NoteTreeItem(RootNote* note, NoteTreeItem* parent = 0);
     explicit NoteTreeItem(Note* note, NoteTreeItem* parent = 0);
+    ~NoteTreeItem();
 
     void addSubnote(NoteTreeItem* note);
 
-//    bool insertChildren(int position, int count, int columns);
-//    bool removeChildren(int position, int count);
+    int subnoteNumber() const;
 
-    int childNumber() const;
+    NoteTreeItem* getSubnote(const int& index) const;
+
+    QString getNoteTitle() const;
 
     variant<monostate, RootNote*, Note*> note;
     QList<NoteTreeItem*> subnotes;
