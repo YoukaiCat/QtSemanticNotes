@@ -27,7 +27,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    return itemFromIndex(index)->getNoteTitle();
+    return itemFromIndex(index)->getNote()->getTitle();
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
@@ -97,15 +97,6 @@ int NoteTreeModel::rowCount(const QModelIndex& parent) const
     }
 
     return parentItem->subnotes.count();
-}
-
-bool NoteTreeModel::setData(const QModelIndex& index,
-                            const QVariant& value, int role)
-{
-    Q_UNUSED(index)
-    Q_UNUSED(value)
-    Q_UNUSED(role)
-    return false;
 }
 
 Qt::DropActions NoteTreeModel::supportedDropActions() const
@@ -212,4 +203,43 @@ bool NoteTreeModel::dropMimeData(const QMimeData* data,
 inline NoteTreeItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
 {
     return static_cast<NoteTreeItem*>(index.internalPointer());
+}
+
+void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& index)
+{
+    if (!index.isValid())
+        return;
+
+    NoteTreeItem* item = itemFromIndex(index);
+    item->getNote()->setTitle(title);
+
+    emit dataChanged(index, index, QVector<int>());
+}
+
+void NoteTreeModel::addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex)
+{
+    if (!parentIndex.isValid())
+        return;
+
+    NoteTreeItem* noteItem = new NoteTreeItem(note);
+    NoteTreeItem* parentItem = itemFromIndex(parentIndex);
+    int newRow = parentItem->subnotes.count();
+    beginInsertRows(parentIndex, newRow, newRow);
+        parentItem->addSubnoteAndUpdateParent(noteItem);
+    endInsertRows();
+}
+
+void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
+{
+    if (!index.isValid())
+        return;
+
+    NoteTreeItem* item = itemFromIndex(index);
+    int oldRow = item->subnotes.count();
+    beginRemoveRows(index, oldRow, oldRow);
+        item->parentItem->subnotes.removeAt(oldRow);
+    endRemoveRows();
+
+    item->getAsNote()->remove();
+    delete item;
 }

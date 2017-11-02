@@ -1,9 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-
 #include "../models/NoteTreeModel.h"
+
+#include <QMainWindow>
+#include <QMenu>
 
 namespace Ui {
 class MainWindow;
@@ -27,7 +28,16 @@ private:
 
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
+
+    NoteTreeItem* headerItem;
+    QHash<Id, NoteTreeItem*> idToTreeItem;
+    NoteTreeItem* rootItem;
+
     unique_ptr<NoteTreeModel> noteTreeModel;
+
+    QMenu notesContextMenu;
+    QMenu notesRootContextMenu;
+    NoteTreeItem* selectedItem;
 };
 
 #endif // MAINWINDOW_H

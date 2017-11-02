@@ -136,6 +136,9 @@
               <property name="headerHidden">
                <bool>true</bool>
               </property>
+              <property name="expandsOnDoubleClick">
+               <bool>false</bool>
+              </property>
              </widget>
             </item>
            </layout>
@@ -250,6 +253,9 @@
            <property name="movable">
             <bool>true</bool>
            </property>
+           <property name="tabBarAutoHide">
+            <bool>true</bool>
+           </property>
            <widget class="QWidget" name="tabNoteContent">
             <attribute name="title">
              <string>Note Content</string>
@@ -278,6 +284,12 @@
                <property name="lineWidth">
                 <number>0</number>
                </property>
+               <property name="undoRedoEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="readOnly">
+                <bool>false</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -290,12 +302,41 @@
              <verstretch>6</verstretch>
             </sizepolicy>
            </property>
-           <property name="tabShape">
-            <enum>QTabWidget::Rounded</enum>
-           </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>2</number>
            </property>
+           <widget class="QWidget" name="tabAliases">
+            <attribute name="title">
+             <string>Aliases</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_6">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QListView" name="listView">
+               <property name="frameShape">
+                <enum>QFrame::NoFrame</enum>
+               </property>
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
            <widget class="QWidget" name="tabTags">
             <attribute name="title">
              <string>Tags</string>
@@ -337,9 +378,9 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="tabReferBy">
+           <widget class="QWidget" name="tabLinkedFrom">
             <attribute name="title">
-             <string>Referred By</string>
+             <string>Linked From</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_3">
              <property name="leftMargin">
@@ -358,7 +399,7 @@
               <number>0</number>
              </property>
              <item row="0" column="0">
-              <widget class="QListWidget" name="listWidgetReferredBy">
+              <widget class="QListWidget" name="listWidgetLinkedFrom">
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -369,9 +410,9 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="tabReferTo">
+           <widget class="QWidget" name="tabLinksTo">
             <attribute name="title">
-             <string>Refer To</string>
+             <string>Links To</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_4">
              <property name="leftMargin">
@@ -390,7 +431,7 @@
               <number>0</number>
              </property>
              <item row="0" column="0">
-              <widget class="QListView" name="listViewReferTo">
+              <widget class="QListView" name="listViewLinksTo">
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
                </property>
@@ -518,7 +559,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show note tags and refs</string>
+    <string>Show note aliases, links and tags</string>
    </property>
   </action>
   <action name="actionShowNoteReferences">

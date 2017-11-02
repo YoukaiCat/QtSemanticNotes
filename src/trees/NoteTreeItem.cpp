@@ -62,13 +62,67 @@ NoteTreeItem* NoteTreeItem::getSubnote(const int& index) const
     return subnotes.at(index);
 }
 
-QString NoteTreeItem::getNoteTitle() const
+AbstractNote* NoteTreeItem::getNote()
 {
     if (holds_alternative<RootNote*>(note))
-        return get<RootNote*>(note)->getTitle();
-
+        return get<RootNote*>(note);
     if (holds_alternative<Note*>(note))
-        return get<Note*>(note)->getTitle();
-
-    return QString("(monostate)");
+        return get<Note*>(note);
 }
+
+RootNote* NoteTreeItem::getAsRoot()
+{
+    if (holds_alternative<RootNote*>(note))
+        return get<RootNote*>(note);
+}
+
+Note* NoteTreeItem::getAsNote()
+{
+    if (holds_alternative<Note*>(note))
+        return get<Note*>(note);
+}
+
+//QString NoteTreeItem::getNoteTitle() const
+//{
+//    if (holds_alternative<RootNote*>(note))
+//        return get<RootNote*>(note)->getTitle();
+
+//    if (holds_alternative<Note*>(note))
+//        return get<Note*>(note)->getTitle();
+
+//    return QString("(monostate)");
+//}
+
+//QString NoteTreeItem::getNoteContent() const
+//{
+//    if (holds_alternative<RootNote*>(note))
+//        return get<RootNote*>(note)->getContent();
+
+//    if (holds_alternative<Note*>(note))
+//        return get<Note*>(note)->getContent();
+
+//    return QString("(monostate)");
+//}
+
+//bool NoteTreeItem::isRootItem()
+//{
+//    return holds_alternative<RootNote*>(note);
+//}
+
+//RootNote* NoteTreeItem::getRootNote()
+//{
+//    if (holds_alternative<RootNote*>(note)) {
+//        return get<RootNote*>(note);
+//    } else {
+//        throw "";
+//    }
+//}
+
+//Note* NoteTreeItem::getNote()
+//{
+//    if (holds_alternative<Note*>(note)) {
+//        return get<Note*>(note);
+//    } else {
+//        throw "";
+//    }
+//}

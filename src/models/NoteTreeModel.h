@@ -27,8 +27,6 @@ public:
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
-    bool setData(const QModelIndex& index, const QVariant& value,
-                 int role = Qt::EditRole) override;
 
     Qt::DropActions supportedDropActions() const override;
 
@@ -46,9 +44,13 @@ public:
                       int row, int column,
                       const QModelIndex& parent) override;
 
-private:
     NoteTreeItem* itemFromIndex(const QModelIndex& index) const;
 
+    void renameNoteAtIndex(const QString& title, const QModelIndex& index);
+    void addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex);
+    void deleteNoteAtIndex(const QModelIndex& index);
+
+private:
     NoteTreeItem* rootItem;
 };
 

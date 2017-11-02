@@ -29,7 +29,13 @@ public:
 
     NoteTreeItem* getSubnote(const int& index) const;
 
-    QString getNoteTitle() const;
+//    QString getNoteTitle() const;
+
+//    QString getNoteContent() const;
+
+    AbstractNote* getNote();
+    RootNote* getAsRoot();
+    Note* getAsNote();
 
     variant<monostate, RootNote*, Note*> note;
     QList<NoteTreeItem*> subnotes;
