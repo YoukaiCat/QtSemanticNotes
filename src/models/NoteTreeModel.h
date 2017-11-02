@@ -34,16 +34,19 @@ public:
 
     QStringList mimeTypes() const override;
 
-    QMimeData* mimeData(const QModelIndexList &indexes) const override;
+    QMimeData* mimeData(const QModelIndexList& indexes) const override;
 
-    bool dropMimeData(const QMimeData *data,
+    bool canDropMimeData(const QMimeData* data,
+                         Qt::DropAction action,
+                         int row, int column,
+                         const QModelIndex& parent) const override;
+
+    bool dropMimeData(const QMimeData* data,
                       Qt::DropAction action,
                       int row, int column,
-                      const QModelIndex &parent) override;
+                      const QModelIndex& parent) override;
 
 private:
-//    void setupModelData(const QStringList& lines, TreeItem* parent);
-//    NoteTreeItem* getItem(const QModelIndex& index) const;
     NoteTreeItem* itemFromIndex(const QModelIndex& index) const;
 
     NoteTreeItem* rootItem;

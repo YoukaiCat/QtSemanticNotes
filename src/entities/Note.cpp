@@ -9,7 +9,7 @@
 
 using std::make_unique;
 
-Note::Note(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
+inline Note::Note(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
     : AbstractNote(),
       id(id),
       title(title),
@@ -18,7 +18,7 @@ Note::Note(const Id& id, const QString& title, const QDateTime& createdAt, const
       parentId(parentId)
 {}
 
-Note::Note(const Id& id, const QString& title, const optional<QString>& content, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
+inline Note::Note(const Id& id, const QString& title, const optional<QString>& content, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
     : AbstractNote(),
       id(id),
       title(title),

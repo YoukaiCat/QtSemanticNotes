@@ -139,15 +139,15 @@ QMimeData* NoteTreeModel::mimeData(const QModelIndexList& indexes) const
     return mimeData;
 }
 
-bool NoteTreeModel::dropMimeData(const QMimeData* data,
-                                 Qt::DropAction action,
-                                 int row, int column,
-                                 const QModelIndex& parentIndex)
+bool NoteTreeModel::canDropMimeData(const QMimeData* data,
+                                    Qt::DropAction action,
+                                    int row, int column,
+                                    const QModelIndex& parentIndex) const
 {
     Q_UNUSED(row)
 
-    if (action == Qt::IgnoreAction)
-        return true;
+    if (action != Qt::MoveAction)
+        return false;
 
     if (!data->hasFormat("application/note"))
         return false;
@@ -157,6 +157,32 @@ bool NoteTreeModel::dropMimeData(const QMimeData* data,
 
     if (!parentIndex.isValid())
         return false;
+
+    QByteArray encodedData = data->data("application/note");
+    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+
+    while (!stream.atEnd()) {
+        quintptr intptr;
+        stream >> intptr;
+
+        NoteTreeItem* note = reinterpret_cast<NoteTreeItem*>(intptr);
+        NoteTreeItem* parent = itemFromIndex(parentIndex);
+
+        if (note->parentItem == parent)
+            return false;
+    }
+
+    return true;
+}
+
+bool NoteTreeModel::dropMimeData(const QMimeData* data,
+                                 Qt::DropAction action,
+                                 int row, int column,
+                                 const QModelIndex& parentIndex)
+{
+    Q_UNUSED(action)
+    Q_UNUSED(row)
+    Q_UNUSED(column)
 
     QByteArray encodedData = data->data("application/note");
     QDataStream stream(&encodedData, QIODevice::ReadOnly);

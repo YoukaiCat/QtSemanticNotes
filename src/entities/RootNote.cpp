@@ -9,7 +9,7 @@
 
 using std::make_unique;
 
-RootNote::RootNote(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt)
+inline RootNote::RootNote(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt)
     : AbstractNote(),
       id(id),
       title(title),
