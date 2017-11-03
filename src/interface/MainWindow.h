@@ -29,15 +29,16 @@ private:
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
 
-    NoteTreeItem* headerItem;
-    QHash<Id, NoteTreeItem*> idToTreeItem;
-    NoteTreeItem* rootItem;
+    NoteItem* headerItem;
+    QHash<Id, NoteItem*> idToItem;
+    NoteItem* rootItem;
 
     unique_ptr<NoteTreeModel> noteTreeModel;
 
     QMenu notesContextMenu;
     QMenu notesRootContextMenu;
-    NoteTreeItem* selectedItem;
+    QModelIndex selectedIndex;
+    NoteItem* selectedItem;
 };
 
 #endif // MAINWINDOW_H

@@ -220,14 +220,14 @@ void Database::defineSchema()
         "CREATE TRIGGER after_delete_note_update_index "
         "AFTER DELETE ON notes "
         "BEGIN "
-            "INSERT INTO notes_fts(fts_idx, rowid, title, content) "
+            "INSERT INTO notes_fts(notes_fts, rowid, title, content) "
                 "VALUES('delete', OLD.id, OLD.title, OLD.content); "
         "END;");
 
     safeExecQuery(
         "CREATE TRIGGER after_update_note_update_index "
         "AFTER UPDATE ON notes BEGIN "
-            "INSERT INTO notes_fts(fts_idx, rowid, title, content) "
+            "INSERT INTO notes_fts(notes_fts, rowid, title, content) "
                 "VALUES('delete', OLD.id, OLD.title, OLD.content); "
             "INSERT INTO notes_fts(rowid, title, content) "
                 "VALUES (NEW.id, NEW.title, NEW.content); "
@@ -252,14 +252,14 @@ void Database::defineSchema()
     safeExecQuery("CREATE TRIGGER after_delete_alias_update_index "
         "AFTER DELETE ON aliases "
         "BEGIN "
-            "INSERT INTO aliases_fts(fts_idx, rowid, alias, note_id) "
+            "INSERT INTO aliases_fts(aliases_fts, rowid, alias, note_id) "
                 "VALUES('delete', OLD.id, OLD.alias, OLD.note_id); "
         "END;");
 
     safeExecQuery(
         "CREATE TRIGGER after_update_alias_update_index "
         "AFTER UPDATE ON aliases BEGIN "
-            "INSERT INTO aliases_fts(fts_idx, rowid, alias, note_id) "
+            "INSERT INTO aliases_fts(aliases_fts, rowid, alias, note_id) "
                 "VALUES('delete', OLD.id, OLD.alias, OLD.note_id); "
             "INSERT INTO aliases_fts(rowid, alias, note_id) "
                 "VALUES (NEW.id, NEW.alias, NEW.note_id); "

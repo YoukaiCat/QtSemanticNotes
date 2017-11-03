@@ -3,7 +3,7 @@
 #include <QMimeData>
 #include <QDataStream>
 
-NoteTreeModel::NoteTreeModel(NoteTreeItem* rootItem, QObject* parent)
+NoteTreeModel::NoteTreeModel(NoteItem* rootItem, QObject* parent)
     : QAbstractItemModel(parent),
       rootItem(rootItem)
 {}
@@ -27,7 +27,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    return itemFromIndex(index)->getNote()->getTitle();
+    return itemFromIndex(index)->getAsAbstractNote()->getTitle();
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
@@ -54,7 +54,7 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
-    NoteTreeItem* parentItem;
+    NoteItem* parentItem;
 
     if (!parent.isValid()) {
         parentItem = rootItem;
@@ -62,9 +62,9 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
         parentItem = itemFromIndex(parent);
     }
 
-    NoteTreeItem* note = parentItem->getSubnote(row);
-    if (note) {
-        return createIndex(row, column, note);
+    NoteItem* childItem = parentItem->getChild(row);
+    if (childItem) {
+        return createIndex(row, column, childItem);
     } else {
         return QModelIndex();
     }
@@ -75,13 +75,13 @@ QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    NoteTreeItem* childItem = itemFromIndex(index);
-    NoteTreeItem* parentItem = childItem->parentItem;
+    NoteItem* childItem = itemFromIndex(index);
+    NoteItem* parentItem = childItem->getParent();
 
     if (parentItem == rootItem)
         return QModelIndex();
 
-    return createIndex(parentItem->subnoteNumber(), 0, parentItem);
+    return createIndex(parentItem->childNumber(), 0, parentItem);
 }
 
 int NoteTreeModel::rowCount(const QModelIndex& parent) const
@@ -89,14 +89,14 @@ int NoteTreeModel::rowCount(const QModelIndex& parent) const
     if (parent.column() > 0)
         return 0;
 
-    NoteTreeItem* parentItem;
+    NoteItem* parentItem;
     if (!parent.isValid()) {
         parentItem = rootItem;
     } else {
         parentItem = itemFromIndex(parent);
     }
 
-    return parentItem->subnotes.count();
+    return parentItem->childCount();
 }
 
 Qt::DropActions NoteTreeModel::supportedDropActions() const
@@ -120,8 +120,8 @@ QMimeData* NoteTreeModel::mimeData(const QModelIndexList& indexes) const
 
     for(const QModelIndex& index : indexes) {
         if (index.isValid()) {
-            NoteTreeItem* note = itemFromIndex(index);
-            quintptr intptr = reinterpret_cast<quintptr>(note);
+            NoteItem* item = itemFromIndex(index);
+            quintptr intptr = reinterpret_cast<quintptr>(item);
             stream << intptr;
         }
     }
@@ -136,14 +136,12 @@ bool NoteTreeModel::canDropMimeData(const QMimeData* data,
                                     const QModelIndex& parentIndex) const
 {
     Q_UNUSED(row)
+    Q_UNUSED(column)
 
     if (action != Qt::MoveAction)
         return false;
 
     if (!data->hasFormat("application/note"))
-        return false;
-
-    if (column > 0)
         return false;
 
     if (!parentIndex.isValid())
@@ -156,10 +154,10 @@ bool NoteTreeModel::canDropMimeData(const QMimeData* data,
         quintptr intptr;
         stream >> intptr;
 
-        NoteTreeItem* note = reinterpret_cast<NoteTreeItem*>(intptr);
-        NoteTreeItem* parent = itemFromIndex(parentIndex);
+        NoteItem* item = reinterpret_cast<NoteItem*>(intptr);
+        NoteItem* parent = itemFromIndex(parentIndex);
 
-        if (note->parentItem == parent)
+        if (item->getParent() == parent)
             return false;
     }
 
@@ -182,27 +180,28 @@ bool NoteTreeModel::dropMimeData(const QMimeData* data,
         quintptr intptr;
         stream >> intptr;
 
-        NoteTreeItem* note = reinterpret_cast<NoteTreeItem*>(intptr);
-        NoteTreeItem* parent = itemFromIndex(parentIndex);
+        NoteItem* item = reinterpret_cast<NoteItem*>(intptr);
+        NoteItem* parent = itemFromIndex(parentIndex);
 
-        QModelIndex oldParent = createIndex(0, 0, note->parentItem);
-        int oldRow = note->subnoteNumber();
-        beginRemoveRows(oldParent, oldRow, oldRow);
-            note->parentItem->subnotes.removeAt(oldRow);
+        int oldRow = item->childNumber();
+        NoteItem* oldParent = item->getParent();
+        QModelIndex oldParentIndex = createIndex(0, 0, oldParent);
+        beginRemoveRows(oldParentIndex, oldRow, oldRow);
+            oldParent->removeChild(oldRow);
         endRemoveRows();
 
-        int newRow = parent->subnotes.count();
+        int newRow = parent->childCount();
         beginInsertRows(parentIndex, newRow, newRow);
-            parent->addSubnoteAndUpdateParent(note);
+            parent->addChildAndUpdateNoteParent(item);
         endInsertRows();
     }
 
     return true;
 }
 
-inline NoteTreeItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
+inline NoteItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
 {
-    return static_cast<NoteTreeItem*>(index.internalPointer());
+    return static_cast<NoteItem*>(index.internalPointer());
 }
 
 void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& index)
@@ -210,8 +209,8 @@ void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& i
     if (!index.isValid())
         return;
 
-    NoteTreeItem* item = itemFromIndex(index);
-    item->getNote()->setTitle(title);
+    NoteItem* item = itemFromIndex(index);
+    item->getAsAbstractNote()->setTitle(title);
 
     emit dataChanged(index, index, QVector<int>());
 }
@@ -221,11 +220,12 @@ void NoteTreeModel::addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex
     if (!parentIndex.isValid())
         return;
 
-    NoteTreeItem* noteItem = new NoteTreeItem(note);
-    NoteTreeItem* parentItem = itemFromIndex(parentIndex);
-    int newRow = parentItem->subnotes.count();
+    NoteItem* noteItem = new NoteItem(note);
+    NoteItem* parentItem = itemFromIndex(parentIndex);
+
+    int newRow = parentItem->childCount();
     beginInsertRows(parentIndex, newRow, newRow);
-        parentItem->addSubnoteAndUpdateParent(noteItem);
+        parentItem->addChildAndUpdateNoteParent(noteItem);
     endInsertRows();
 }
 
@@ -234,10 +234,12 @@ void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
     if (!index.isValid())
         return;
 
-    NoteTreeItem* item = itemFromIndex(index);
-    int oldRow = item->subnotes.count();
-    beginRemoveRows(index, oldRow, oldRow);
-        item->parentItem->subnotes.removeAt(oldRow);
+    NoteItem* item = itemFromIndex(index);
+
+    NoteItem* parent = item->getParent();
+    int row = item->childNumber();
+    beginRemoveRows(index.parent(), row, row);
+        parent->removeChild(row);
     endRemoveRows();
 
     item->getAsNote()->remove();
