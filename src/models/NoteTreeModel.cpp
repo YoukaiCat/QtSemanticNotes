@@ -242,6 +242,7 @@ void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
         parent->removeChild(row);
     endRemoveRows();
 
+    //Subnotes should be removed by sql trigger
     item->getAsNote()->remove();
     delete item;
 }

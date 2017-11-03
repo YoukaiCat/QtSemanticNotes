@@ -13,6 +13,7 @@
 #include <QSqlRecord>
 
 #include <QMessageBox>
+#include <QInputDialog>
 
 #include <QDebug>
 
@@ -50,6 +51,29 @@ MainWindow::MainWindow(QWidget* parent) :
         parent->addChild(item);
     }
 
+    auto onAddSubnote = [this](){
+        bool ok;
+        QString title = QInputDialog::getText(this, tr("Add Subnote"),
+                                             tr("Title:"), QLineEdit::Normal,
+                                             "", &ok);
+        if (ok && !title.isEmpty()) {
+            auto note = Note::create(title, "", selectedItem->getAsAbstractNote()->getId());
+            Note* noteptr = note.get();
+            notes.push_back(std::move(note));
+            noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
+        }
+    };
+
+    auto onRenameNote = [this](){
+        bool ok;
+        QString title = QInputDialog::getText(this, tr("Rename note"),
+                                             tr("New Title:"), QLineEdit::Normal,
+                                             selectedItem->getAsAbstractNote()->getTitle(), &ok);
+        if (ok && !title.isEmpty()) {
+            noteTreeModel->renameNoteAtIndex(title, selectedIndex);
+        }
+    };
+
     noteTreeModel = make_unique<NoteTreeModel>(headerItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
 
@@ -58,13 +82,8 @@ MainWindow::MainWindow(QWidget* parent) :
         ui->textBrowserNoteContent->setText(note->getContent());
     });
     notesContextMenu.addAction("Open in new tab", [](){});
-    notesContextMenu.addAction("Add Subnote", [](){
-        //auto note = Note::create();
-        //noteTreeModel->addSubnoteAtIndex(, selectedIndex);
-    });
-    notesContextMenu.addAction("Rename", [](){
-        //noteTreeModel->renameNoteAtIndex(, selectedIndex);
-    });
+    notesContextMenu.addAction("Add Subnote", onAddSubnote);
+    notesContextMenu.addAction("Rename", onRenameNote);
     notesContextMenu.addSeparator();
     notesContextMenu.addAction("Delete", [this](){
         noteTreeModel->deleteNoteAtIndex(selectedIndex);
@@ -75,12 +94,8 @@ MainWindow::MainWindow(QWidget* parent) :
         ui->textBrowserNoteContent->setText(note->getContent());
     });
     notesRootContextMenu.addAction("Open in new tab", [](){});
-    notesRootContextMenu.addAction("Add Subnote", [](){
-
-    });
-    notesRootContextMenu.addAction("Rename", [](){
-
-    });
+    notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
+    notesRootContextMenu.addAction("Rename", onRenameNote);
 }
 
 MainWindow::~MainWindow()

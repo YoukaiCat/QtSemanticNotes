@@ -277,7 +277,7 @@ void Database::defineSchema()
     safeExecQuery("insert into relations (note_id, parent_id) values (2, 1)");
     safeExecQuery("insert into relations (note_id, parent_id) values (3, 2)");
     safeExecQuery("insert into notes (title) values ('1-1 test')");
-    safeExecQuery("insert into notes (title) values ('2-2 test3')");
+    safeExecQuery("insert into notes (title) values ('2-2 test')");
     safeExecQuery("insert into relations (note_id, parent_id) values (4, 1)");
     safeExecQuery("insert into relations (note_id, parent_id) values (5, 4)");
     safeExecQuery("insert into aliases (alias, note_id) values ('a b c', 2)");
