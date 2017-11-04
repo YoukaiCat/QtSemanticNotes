@@ -34,7 +34,7 @@ public slots:
     void on_toolButtonRemoveTag_clicked();
 
     void on_treeViewNotes_customContextMenuRequested(const QPoint & point);
-    void on_treeViewNotes_doubleClicked(const QModelIndex &index);
+    void on_treeViewNotes_clicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow* ui;

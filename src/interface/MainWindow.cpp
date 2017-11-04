@@ -187,6 +187,11 @@ void MainWindow::openNote(AbstractNote* note)
 {
     currentNote = note;
 
+    QString title = QString("QtSemanticNotes | %1").arg(note->getTitle());
+    setWindowTitle(title);
+
+    ui->tabWidgetNotes->setTabText(ui->tabWidgetNotes->currentIndex(), note->getTitle());
+
     ui->textBrowserNoteContent->setEnabled(true);
     ui->tableViewAliases->setEnabled(true);
     ui->tableViewNoteTags->setEnabled(true);
@@ -317,7 +322,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     }
 }
 
-void MainWindow::on_treeViewNotes_doubleClicked(const QModelIndex &index)
+void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
 {
     auto item = noteTreeModel->itemFromIndex(index);
     auto note = item->getAsAbstractNote();

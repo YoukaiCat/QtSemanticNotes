@@ -258,7 +258,7 @@
            </property>
            <widget class="QWidget" name="tabNoteContent">
             <attribute name="title">
-             <string>Note Content</string>
+             <string>Note</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_5">
              <property name="leftMargin">
