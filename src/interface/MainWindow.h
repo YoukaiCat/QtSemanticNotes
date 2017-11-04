@@ -42,6 +42,8 @@ private:
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
 
+    //QMap<QString, AbstractNote*> titleTo;
+
     NoteItem* headerItem;
     QHash<Id, NoteItem*> idToItem;
     NoteItem* rootItem;

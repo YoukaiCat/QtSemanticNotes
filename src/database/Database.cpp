@@ -107,7 +107,7 @@ void Database::defineSchema()
     |-> aliases |#id, alias, @note_id|
     |-> relations |#id, @note_id, @parent_id|
     |-> links |#id, @from_note_id, @to_note_id|
-    |-> note_tags |#id, @note_id, @tag_id| <- tags |#id, tag|
+    |-> note_tags |#id, @note_id, @tag_id| <- tags |#id, name|
 */
     safeExecQuery(
         "CREATE TABLE notes ( "
@@ -176,7 +176,7 @@ void Database::defineSchema()
     safeExecQuery(
         "CREATE TABLE tags ( "
             "id INTEGER PRIMARY KEY, "
-            "tag TEXT COLLATE NOCASE UNIQUE NOT NULL, "
+            "name TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
         ")");

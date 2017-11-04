@@ -131,7 +131,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     tagsModel = make_unique<QSqlRelationalTableModel>();
     tagsModel->setTable("note_tags");
-    tagsModel->setRelation(2, QSqlRelation("tags", "id", "tag"));
+    tagsModel->setRelation(2, QSqlRelation("tags", "id", "name"));
     tagsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     ui->tableViewNoteTags->setModel(tagsModel.get());
     ui->tableViewNoteTags->hideColumn(0);
@@ -249,10 +249,10 @@ void MainWindow::on_toolButtonRemoveAlias_clicked()
 void MainWindow::on_toolButtonAddTag_clicked()
 {
     bool ok;
-    QString tag = QInputDialog::getText(this, tr("Add Tag"),
+    QString name = QInputDialog::getText(this, tr("Add Tag"),
                                          tr("Tag name:"), QLineEdit::Normal,
                                          "", &ok);
-    if (ok && !tag.isEmpty()) {
+    if (ok && !name.isEmpty()) {
         QDateTime now = QDateTime::currentDateTime();
         QString now_s = now.toString(Qt::ISODateWithMs);
 
@@ -261,17 +261,17 @@ void MainWindow::on_toolButtonAddTag_clicked()
         QSqlQuery tagIdQuery;
         tagIdQuery.prepare("SELECT id "
                            "FROM tags "
-                           "WHERE tag = :tag");
-        tagIdQuery.bindValue(":tag", tag);
+                           "WHERE name = :name");
+        tagIdQuery.bindValue(":name", name);
         Database::safeExecPreparedQuery(tagIdQuery);
 
         if (tagIdQuery.next()) {
             id = tagIdQuery.value(0).toUInt();
         } else {
             QSqlQuery insertTagQuery;
-            insertTagQuery.prepare("INSERT INTO tags (tag, created_at, updated_at) "
-                      "VALUES (:tag, :created_at, :updated_at)");
-            insertTagQuery.bindValue(":tag", tag);
+            insertTagQuery.prepare("INSERT INTO tags (name, created_at, updated_at) "
+                      "VALUES (:name, :created_at, :updated_at)");
+            insertTagQuery.bindValue(":name", name);
             insertTagQuery.bindValue(":created_at", now_s);
             insertTagQuery.bindValue(":updated_at", now_s);
             Database::safeExecPreparedQuery(insertTagQuery);
