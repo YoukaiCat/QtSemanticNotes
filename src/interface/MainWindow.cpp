@@ -86,7 +86,14 @@ MainWindow::MainWindow(QWidget* parent) :
     notesContextMenu.addAction("Rename", onRenameNote);
     notesContextMenu.addSeparator();
     notesContextMenu.addAction("Delete", [this](){
-        noteTreeModel->deleteNoteAtIndex(selectedIndex);
+        QMessageBox msgBox;
+        msgBox.setText("Remove note?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        int answer = msgBox.exec();
+        if (answer == QMessageBox::Yes) {
+            noteTreeModel->deleteNoteAtIndex(selectedIndex);
+        }
     });
 
     notesRootContextMenu.addAction("Open", [this](){
