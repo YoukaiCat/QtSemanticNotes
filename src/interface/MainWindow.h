@@ -6,6 +6,10 @@
 #include <QMainWindow>
 #include <QMenu>
 
+#include <QSqlQueryModel>
+#include <QSqlTableModel>
+#include <QSqlRelationalTableModel>
+
 namespace Ui {
 class MainWindow;
 }
@@ -21,7 +25,16 @@ public:
 public slots:
     void on_actionAboutQt_triggered();
 
+    void openNote(AbstractNote* note);
+
+    void on_toolButtonAddAlias_clicked();
+    void on_toolButtonRemoveAlias_clicked();
+
+    void on_toolButtonAddTag_clicked();
+    void on_toolButtonRemoveTag_clicked();
+
     void on_treeViewNotes_customContextMenuRequested(const QPoint & point);
+    void on_treeViewNotes_doubleClicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow* ui;
@@ -39,6 +52,14 @@ private:
     QMenu notesRootContextMenu;
     QModelIndex selectedIndex;
     NoteItem* selectedItem;
+
+    AbstractNote* currentNote;
+
+    unique_ptr<QSqlQueryModel> searchModel;
+    unique_ptr<QSqlTableModel> aliasesModel;
+    unique_ptr<QSqlRelationalTableModel> tagsModel;
+    unique_ptr<QSqlRelationalTableModel> linkedFromModel;
+    unique_ptr<QSqlRelationalTableModel> linksToModel;
 };
 
 #endif // MAINWINDOW_H

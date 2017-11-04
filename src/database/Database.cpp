@@ -135,7 +135,8 @@ void Database::defineSchema()
             "alias TEXT UNIQUE NOT NULL, "
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "UNIQUE(alias, note_id) ON CONFLICT REPLACE "
         ")");
 
     //query.exec("CREATE INDEX aliases_alias ON aliases(alias COLLATE NOCASE)");
@@ -152,7 +153,8 @@ void Database::defineSchema()
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "parent_id INTEGER NOT NULL REFERENCES notes(id), "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "UNIQUE(note_id, parent_id) ON CONFLICT REPLACE "
         ")");
 
     safeExecQuery("CREATE INDEX relations_note_id_fk ON relations(note_id)");
@@ -164,7 +166,8 @@ void Database::defineSchema()
             "from_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "to_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "UNIQUE(from_note_id, to_note_id) ON CONFLICT REPLACE "
         ")");
 
     safeExecQuery("CREATE INDEX links_from_note_id_fk ON links(from_note_id)");
@@ -184,7 +187,8 @@ void Database::defineSchema()
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "UNIQUE(note_id, tag_id) ON CONFLICT REPLACE "
         ")");
 
     safeExecQuery("CREATE INDEX note_note_id_fk ON note_tags(note_id)");

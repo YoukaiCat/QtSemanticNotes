@@ -11,9 +11,12 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QSqlRelation>
 
 #include <QMessageBox>
 #include <QInputDialog>
+
+#include <QItemSelectionModel>
 
 #include <QDebug>
 
@@ -79,7 +82,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     notesContextMenu.addAction("Open", [this](){
         Note* note = selectedItem->getAsNote();
-        ui->textBrowserNoteContent->setText(note->getContent());
+        openNote(note);
     });
     notesContextMenu.addAction("Open in new tab", [](){});
     notesContextMenu.addAction("Add Subnote", onAddSubnote);
@@ -87,7 +90,7 @@ MainWindow::MainWindow(QWidget* parent) :
     notesContextMenu.addSeparator();
     notesContextMenu.addAction("Delete", [this](){
         QMessageBox msgBox;
-        msgBox.setText("Remove note?");
+        msgBox.setText("Remove note and it's subnotes?");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msgBox.setDefaultButton(QMessageBox::Yes);
         int answer = msgBox.exec();
@@ -98,11 +101,76 @@ MainWindow::MainWindow(QWidget* parent) :
 
     notesRootContextMenu.addAction("Open", [this](){
         RootNote* note = selectedItem->getAsRoot();
-        ui->textBrowserNoteContent->setText(note->getContent());
+        openNote(note);
     });
     notesRootContextMenu.addAction("Open in new tab", [](){});
     notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
     notesRootContextMenu.addAction("Rename", onRenameNote);
+
+    aliasesModel = make_unique<QSqlTableModel>();
+    aliasesModel->setTable("aliases");
+    aliasesModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    ui->tableViewAliases->setModel(aliasesModel.get());
+    ui->tableViewAliases->hideColumn(0);
+    ui->tableViewAliases->hideColumn(2);
+    ui->tableViewAliases->hideColumn(3);
+    ui->tableViewAliases->hideColumn(4);
+
+    connect(ui->tableViewAliases->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            [this](const QItemSelection &selected, const QItemSelection &deselected)
+    {
+        Q_UNUSED(selected)
+        Q_UNUSED(deselected)
+        if(ui->tableViewAliases->selectionModel()->selectedIndexes().size() > 0) {
+            ui->toolButtonRemoveAlias->setEnabled(true);
+        } else {
+            ui->toolButtonRemoveAlias->setEnabled(false);
+        }
+    });
+
+    tagsModel = make_unique<QSqlRelationalTableModel>();
+    tagsModel->setTable("note_tags");
+    tagsModel->setRelation(2, QSqlRelation("tags", "id", "tag"));
+    tagsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    ui->tableViewNoteTags->setModel(tagsModel.get());
+    ui->tableViewNoteTags->hideColumn(0);
+    ui->tableViewNoteTags->hideColumn(1);
+    ui->tableViewNoteTags->hideColumn(3);
+    ui->tableViewNoteTags->hideColumn(4);
+
+    connect(ui->tableViewNoteTags->selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            [this](const QItemSelection &selected, const QItemSelection &deselected)
+    {
+        Q_UNUSED(selected)
+        Q_UNUSED(deselected)
+        if(ui->tableViewNoteTags->selectionModel()->selectedIndexes().size() > 0) {
+            ui->toolButtonRemoveTag->setEnabled(true);
+        } else {
+            ui->toolButtonRemoveTag->setEnabled(false);
+        }
+    });
+
+    linkedFromModel = make_unique<QSqlRelationalTableModel>();
+    linkedFromModel->setTable("links");
+    linkedFromModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    linkedFromModel->setRelation(1, QSqlRelation("notes", "id", "title"));
+    ui->tableViewLinkedFrom->setModel(linkedFromModel.get());
+    ui->tableViewLinkedFrom->hideColumn(0);
+    ui->tableViewLinkedFrom->hideColumn(2);
+    ui->tableViewLinkedFrom->hideColumn(3);
+    ui->tableViewLinkedFrom->hideColumn(4);
+
+    linksToModel = make_unique<QSqlRelationalTableModel>();
+    linksToModel->setTable("links");
+    linksToModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    linksToModel->setRelation(2, QSqlRelation("notes", "id", "title"));
+    ui->tableViewLinksTo->setModel(linksToModel.get());
+    ui->tableViewLinksTo->hideColumn(0);
+    ui->tableViewLinksTo->hideColumn(1);
+    ui->tableViewLinksTo->hideColumn(3);
+    ui->tableViewLinksTo->hideColumn(4);
 }
 
 MainWindow::~MainWindow()
@@ -113,6 +181,123 @@ MainWindow::~MainWindow()
 void MainWindow::on_actionAboutQt_triggered()
 {
     qApp->aboutQt();
+}
+
+void MainWindow::openNote(AbstractNote* note)
+{
+    currentNote = note;
+
+    ui->textBrowserNoteContent->setEnabled(true);
+    ui->tableViewAliases->setEnabled(true);
+    ui->tableViewNoteTags->setEnabled(true);
+    ui->tableViewLinkedFrom->setEnabled(true);
+    ui->tableViewLinksTo->setEnabled(true);
+    ui->toolButtonAddAlias->setEnabled(true);
+    ui->toolButtonAddTag->setEnabled(true);
+
+    ui->textBrowserNoteContent->setText(note->getContent());
+
+    QString idFilter = QString("note_id = %1").arg(note->getId());
+
+    aliasesModel->setFilter(idFilter);
+    aliasesModel->select();
+
+    tagsModel->setFilter(idFilter);
+    tagsModel->select();
+
+    linkedFromModel->setFilter(idFilter);
+    linkedFromModel->select();
+
+    linksToModel->setFilter(idFilter);
+    linksToModel->select();
+}
+
+void MainWindow::on_toolButtonAddAlias_clicked()
+{
+    bool ok;
+    QString alias = QInputDialog::getText(this, tr("Add Alias"),
+                                         tr("Alias name:"), QLineEdit::Normal,
+                                         "", &ok);
+    if (ok && !alias.isEmpty()) {
+        QDateTime now = QDateTime::currentDateTime();
+        QString now_s = now.toString(Qt::ISODateWithMs);
+
+        QSqlRecord record = aliasesModel->record();
+        record.setGenerated("id", false);
+        record.setValue("alias", alias);
+        record.setValue("note_id", currentNote->getId());
+        record.setValue("created_at", now_s);
+        record.setValue("updated_at", now_s);
+        aliasesModel->insertRecord(-1, record);
+    }
+}
+
+void MainWindow::on_toolButtonRemoveAlias_clicked()
+{
+    QModelIndexList indexes = ui->tableViewAliases->selectionModel()->selectedIndexes();
+    for(QModelIndex& index : indexes) {
+        aliasesModel->removeRows(index.row(), 1);
+    }
+    aliasesModel->select();
+}
+
+void MainWindow::on_toolButtonAddTag_clicked()
+{
+    bool ok;
+    QString tag = QInputDialog::getText(this, tr("Add Tag"),
+                                         tr("Tag name:"), QLineEdit::Normal,
+                                         "", &ok);
+    if (ok && !tag.isEmpty()) {
+        QDateTime now = QDateTime::currentDateTime();
+        QString now_s = now.toString(Qt::ISODateWithMs);
+
+        uint id;
+
+        QSqlQuery tagIdQuery;
+        tagIdQuery.prepare("SELECT id "
+                           "FROM tags "
+                           "WHERE tag = :tag");
+        tagIdQuery.bindValue(":tag", tag);
+        Database::safeExecPreparedQuery(tagIdQuery);
+
+        if (tagIdQuery.next()) {
+            id = tagIdQuery.value(0).toUInt();
+        } else {
+            QSqlQuery insertTagQuery;
+            insertTagQuery.prepare("INSERT INTO tags (tag, created_at, updated_at) "
+                      "VALUES (:tag, :created_at, :updated_at)");
+            insertTagQuery.bindValue(":tag", tag);
+            insertTagQuery.bindValue(":created_at", now_s);
+            insertTagQuery.bindValue(":updated_at", now_s);
+            Database::safeExecPreparedQuery(insertTagQuery);
+
+            QSqlQuery rowIdQuery;
+            rowIdQuery.prepare("SELECT last_insert_rowid()");
+            Database::safeExecPreparedQuery(rowIdQuery);
+            rowIdQuery.next();
+            id = rowIdQuery.value(0).toUInt();
+        }
+
+        QSqlQuery insertNoteTagsQuery;
+        insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at, updated_at) "
+                  "VALUES (:note_id, :tag_id, :created_at, :updated_at)");
+        insertNoteTagsQuery.bindValue(":note_id", currentNote->getId());
+        insertNoteTagsQuery.bindValue(":tag_id", id);
+        insertNoteTagsQuery.bindValue(":created_at", now_s);
+        insertNoteTagsQuery.bindValue(":updated_at", now_s);
+        Database::safeExecPreparedQuery(insertNoteTagsQuery);
+
+        tagsModel->select();
+    }
+}
+
+void MainWindow::on_toolButtonRemoveTag_clicked()
+{
+    QModelIndexList indexes = ui->tableViewNoteTags->selectionModel()->selectedIndexes();
+    for(QModelIndex& index : indexes) {
+        tagsModel->removeRows(index.row(), 1);
+    }
+    tagsModel->select();
 }
 
 void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point)
@@ -130,4 +315,11 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     } else {
         notesContextMenu.exec(globalPoint);
     }
+}
+
+void MainWindow::on_treeViewNotes_doubleClicked(const QModelIndex &index)
+{
+    auto item = noteTreeModel->itemFromIndex(index);
+    auto note = item->getAsAbstractNote();
+    openNote(note);
 }
