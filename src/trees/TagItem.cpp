@@ -3,6 +3,7 @@
 #include <QMapIterator>
 
 TagItem::TagItem()
+    : parent(nullptr)
 {}
 
 TagItem::TagItem(const QString& word, TagItem* parent)
@@ -19,31 +20,43 @@ void TagItem::insert(QStringList& words)
 {
     if (!words.empty()) {
         QString head = words.takeFirst();
-        if (wordToChildren.contains(word)) {
+        if (wordToChildren.contains(head)) {
             wordToChildren[head]->insert(words);
         } else {
-            TagItem* item = new TagItem(word, this);
-            wordToChildren.insert(head, item);
+            TagItem* item = new TagItem(head, this);
             children.append(item);
+            wordToChildren.insert(head, item);
             item->insert(words);
         }
     }
 }
 
-QString TagItem::getFullTag() const
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type"
+QString TagItem::getFullTag(QStringList& words) const
 {
+    words.append(word);
+    if (parent) {
+        parent->getFullTag(words);
+    } else {
+        std::reverse(words.begin(), words.end());
+        return words.join(".");
+    }
+}
+#pragma GCC diagnostic pop
 
+QString TagItem::getWord() const
+{
+    return word;
 }
 
 int TagItem::childNumber() const
 {
-    int i = 0;
-    QMapIterator<QString, TagItem*> iter(parent->children);
-    while (iter.hasNext()) {
-        iter.next();
-        i++;
+    if (parent) {
+        return parent->children.indexOf(const_cast<TagItem*>(this));
+    } else {
+        return 0;
     }
-    return i;
 }
 
 int TagItem::childCount() const
@@ -53,32 +66,12 @@ int TagItem::childCount() const
 
 void TagItem::removeChild(const int& index)
 {
-    int i = 0;
-    QMapIterator<QString, TagItem*> iter(children);
-    while (iter.hasNext()) {
-        iter.next();
-        if(i == index) {
-            children.remove(iter.key());
-            break;
-        } else {
-            i++;
-        }
-    }
+    children.removeAt(index);
 }
 
 TagItem* TagItem::getChild(const int& index) const
 {
-    int i = 0;
-    QMapIterator<QString, TagItem*> iter(children);
-    while (iter.hasNext()) {
-        iter.next();
-        if(i == index) {
-            return iter.value();
-        } else {
-            i++;
-        }
-    }
-    throw "";
+    return children.at(index);
 }
 
 TagItem* TagItem::getParent() const

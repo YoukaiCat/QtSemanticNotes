@@ -30,8 +30,8 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
 
     Database db;
-    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    //db.openDatabase(":memory:");
+    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    db.openDatabase(":memory:");
 
     rootNote = RootNote::getRootNote();
 
@@ -64,7 +64,7 @@ MainWindow::MainWindow(QWidget* parent) :
     for(auto& tag : tags) {
         QString name = tag->getName();
         QStringList words = name.split(".");
-        tagHeaderItem->placeTag(tag.get(), words);
+        tagHeaderItem->insert(words);
     }
 
     tagTreeModel = make_unique<TagTreeModel>(tagHeaderItem);

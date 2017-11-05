@@ -21,8 +21,10 @@ public:
 
     void removeChild(const int& index);
 
+    QString getWord() const;
+
     void insert(QStringList& words);
-    QString getFullTag() const;
+    QString getFullTag(QStringList& words) const;
 
 private:
     QString word;

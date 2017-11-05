@@ -27,7 +27,7 @@ QVariant TagTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    return itemFromIndex(index)->getTag()->getName();
+    return itemFromIndex(index)->getWord();
 }
 
 Qt::ItemFlags TagTreeModel::flags(const QModelIndex& index) const
@@ -133,8 +133,8 @@ void TagTreeModel::renameTagAtIndex(const QString& name, const QModelIndex& inde
     if (!index.isValid())
         return;
 
-    TagItem* item = itemFromIndex(index);
-    item->getTag()->setName(name);
+//    TagItem* item = itemFromIndex(index);
+//    item->getTag()->setName(name);
 
     emit dataChanged(index, index, QVector<int>());
 }
@@ -153,6 +153,6 @@ void TagTreeModel::deleteTagAtIndex(const QModelIndex& index)
     endRemoveRows();
 
     //SubTags should be removed by sql trigger
-    item->getTag()->remove();
-    delete item;
+//    item->getTag()->remove();
+//    delete item;
 }

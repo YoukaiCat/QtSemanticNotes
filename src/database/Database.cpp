@@ -287,4 +287,10 @@ void Database::defineSchema()
     safeExecQuery("insert into aliases (alias, note_id) values ('a b c', 2)");
     safeExecQuery("insert into aliases (alias, note_id) values ('c d e', 2)");
     safeExecQuery("insert into aliases (alias, note_id) values ('f g h', 2)");
+    safeExecQuery("insert into tags (name) values ('cs.lang.java')");
+    safeExecQuery("insert into tags (name) values ('cs.lang.scala')");
+    safeExecQuery("insert into tags (name) values ('cs.lang.java.variance')");
+    safeExecQuery("insert into tags (name) values ('cs.netwoking')");
+    safeExecQuery("insert into tags (name) values ('csgo.weapons')");
+    safeExecQuery("insert into tags (name) values ('tag')");
 }
