@@ -142,5 +142,5 @@ void TagTreeModel::deleteTagAtIndex(const QModelIndex& index)
         parent->removeChild(row);
     endRemoveRows();
 
-    delete item;
+    //delete item;
 }

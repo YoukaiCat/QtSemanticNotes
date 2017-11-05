@@ -316,6 +316,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
         }
     };
 
+    QMenu notesContextMenu;
     notesContextMenu.addAction("Open", onOpenAction);
     notesContextMenu.addAction("Open in new tab", [](){});
     notesContextMenu.addAction("Add Subnote", onAddSubnote);
@@ -323,6 +324,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     notesContextMenu.addSeparator();
     notesContextMenu.addAction("Delete", onDeleteAction);
 
+    QMenu notesRootContextMenu;
     notesRootContextMenu.addAction("Open", onOpenAction);
     notesRootContextMenu.addAction("Open in new tab", [](){});
     notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
@@ -366,12 +368,12 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
             QString fulltag = selectedItem->getFullTag(words);
             QSqlQuery q;
             if (selectedItem->childCount() == 0) {
+                q.prepare("DELETE FROM tags "
+                          "WHERE name = :name");
+            } else {
                 fulltag.append(".");
                 q.prepare("DELETE FROM tags "
                           "WHERE name LIKE ':name%'");
-            } else {
-                q.prepare("DELETE FROM tags "
-                          "WHERE name = :name");
             }
             q.bindValue(":name", fulltag);
             Database::safeExecPreparedQuery(q);
@@ -379,6 +381,7 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
         }
     };
 
+    QMenu tagsContextMenu;
     tagsContextMenu.addAction("Find By Tag", onFindAction);
     tagsContextMenu.addSeparator();
     tagsContextMenu.addAction("Delete", onDeleteAction);

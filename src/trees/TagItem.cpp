@@ -31,19 +31,20 @@ void TagItem::insert(QStringList& words)
     }
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wreturn-type"
 QString TagItem::getFullTag(QStringList& words) const
 {
     words.append(word);
-    if (parent) {
-        parent->getFullTag(words);
+    if (parent != nullptr) {
+        return parent->getFullTag(words);
     } else {
         std::reverse(words.begin(), words.end());
-        return words.join(".");
+        if (words.size() > 2) {
+            return words.join(".");
+        } else {
+            return words.join("");
+        }
     }
 }
-#pragma GCC diagnostic pop
 
 QString TagItem::getWord() const
 {

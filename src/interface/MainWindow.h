@@ -52,11 +52,6 @@ private:
 
     unique_ptr<NoteTreeModel> noteTreeModel;
 
-    QMenu notesContextMenu;
-    QMenu notesRootContextMenu;
-
-    QMenu tagsContextMenu;
-
     AbstractNote* currentNote;
 
     vector<unique_ptr<Tag>> tags;
