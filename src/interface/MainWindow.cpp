@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget* parent) :
     noteTreeModel = make_unique<NoteTreeModel>(noteHeaderItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
 
-    tags = Tag::getAll();
+    auto tags = Tag::getAll();
 
     tagHeaderItem = new TagItem();
 
@@ -134,6 +134,9 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewLinksTo->hideColumn(1);
     ui->tableViewLinksTo->hideColumn(3);
     ui->tableViewLinksTo->hideColumn(4);
+
+    searchModel = make_unique<QSqlQueryModel>();
+    ui->tableViewSearch->setModel(searchModel.get());
 }
 
 MainWindow::~MainWindow()
@@ -367,15 +370,12 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
             QStringList words;
             QString fulltag = selectedItem->getFullTag(words);
             QSqlQuery q;
-            if (selectedItem->childCount() == 0) {
-                q.prepare("DELETE FROM tags "
-                          "WHERE name = :name");
-            } else {
-                fulltag.append(".");
-                q.prepare("DELETE FROM tags "
-                          "WHERE name LIKE ':name%'");
-            }
+            //cs.lang.java AND cs.lang.java.*
+            //cs but not cs* (csgo for ex)
+            q.prepare("DELETE FROM tags "
+                      "WHERE name = :name OR name LIKE :like_name || '%'");
             q.bindValue(":name", fulltag);
+            q.bindValue(":like_name", fulltag.append('.'));
             Database::safeExecPreparedQuery(q);
             tagTreeModel->deleteTagAtIndex(selectedIndex);
         }
@@ -392,4 +392,31 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
 }
 
 void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
-{}
+{
+    TagItem* selectedItem = tagTreeModel->itemFromIndex(index);
+    QStringList words;
+    QString fulltag = selectedItem->getFullTag(words);
+    QSqlQuery q;
+    q.prepare("SELECT notes.id, notes.title "
+              "FROM notes "
+              "JOIN note_tags ON note_tags.note_id = notes.id "
+              "JOIN tags ON tags.id = note_tags.tag_id "
+              "WHERE tags.name = :name OR tags.name LIKE :like_name || '%'");
+    q.bindValue(":name", fulltag);
+    q.bindValue(":like_name", fulltag.append('.'));
+    Database::safeExecPreparedQuery(q);
+
+    searchModel->setQuery(q);
+    searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
+    ui->tableViewSearch->setColumnHidden(0, true);
+}
+
+void MainWindow::on_tableViewSearch_doubleClicked(const QModelIndex& index)
+{
+    QSqlRecord note = searchModel->record(index.row());
+    uint id = note.value("id").toUInt();
+    if (idToItem.contains(id)) {
+        NoteItem* item = idToItem.value(id);
+        openNote(item->getAsAbstractNote());
+    }
+}

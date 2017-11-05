@@ -33,16 +33,13 @@ void TagItem::insert(QStringList& words)
 
 QString TagItem::getFullTag(QStringList& words) const
 {
-    words.append(word);
+    if (!word.isEmpty())
+        words.append(word);
     if (parent != nullptr) {
         return parent->getFullTag(words);
     } else {
         std::reverse(words.begin(), words.end());
-        if (words.size() > 2) {
-            return words.join(".");
-        } else {
-            return words.join("");
-        }
+        return words.join('.');
     }
 }
 

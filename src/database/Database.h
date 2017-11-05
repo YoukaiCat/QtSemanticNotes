@@ -5,6 +5,8 @@
 #include <QString>
 #include <QSqlError>
 
+#include <QDebug>
+
 class OpenDBException : public QException
 {
 public:
@@ -57,6 +59,8 @@ public:
             QString m("Query error:\n");
             m.append(query.lastQuery());
             m.append(query.lastError().text());
+            qDebug() << query.lastQuery();
+            qDebug() << query.lastError().text();
             throw QueryException(m);
         }
     }

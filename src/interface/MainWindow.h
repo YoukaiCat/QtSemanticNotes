@@ -34,11 +34,13 @@ public slots:
     void on_toolButtonAddTag_clicked();
     void on_toolButtonRemoveTag_clicked();
 
-    void on_treeViewNotes_customContextMenuRequested(const QPoint & point);
-    void on_treeViewNotes_clicked(const QModelIndex &index);
+    void on_treeViewNotes_customContextMenuRequested(const QPoint& point);
+    void on_treeViewNotes_clicked(const QModelIndex& index);
 
-    void on_treeViewTags_customContextMenuRequested(const QPoint & point);
-    void on_treeViewTags_doubleClicked(const QModelIndex &index);
+    void on_treeViewTags_customContextMenuRequested(const QPoint& point);
+    void on_treeViewTags_doubleClicked(const QModelIndex& index);
+
+    void on_tableViewSearch_doubleClicked(const QModelIndex& index);
 
 private:
     Ui::MainWindow* ui;
@@ -46,19 +48,17 @@ private:
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
 
-    NoteItem* noteHeaderItem;
     QHash<Id, NoteItem*> idToItem;
     NoteItem* rootItem;
 
-    unique_ptr<NoteTreeModel> noteTreeModel;
+    //~~~
 
     AbstractNote* currentNote;
 
-    vector<unique_ptr<Tag>> tags;
-
+    NoteItem* noteHeaderItem;
     TagItem* tagHeaderItem;
-    QHash<QString, TagItem*> firstWordToItem;
 
+    unique_ptr<NoteTreeModel> noteTreeModel;
     unique_ptr<TagTreeModel> tagTreeModel;
 
     unique_ptr<QSqlQueryModel> searchModel;

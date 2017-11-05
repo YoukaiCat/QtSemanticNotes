@@ -293,4 +293,10 @@ void Database::defineSchema()
     safeExecQuery("insert into tags (name) values ('cs.netwoking')");
     safeExecQuery("insert into tags (name) values ('csgo.weapons')");
     safeExecQuery("insert into tags (name) values ('tag')");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (2, 1)");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (4, 2)");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (3, 3)");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (1, 4)");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (1, 5)");
+    safeExecQuery("insert into note_tags (note_id, tag_id) values (5, 5)");
 }
