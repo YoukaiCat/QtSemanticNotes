@@ -30,14 +30,14 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
 
     Database db;
-    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    db.openDatabase(":memory:");
+    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    //db.openDatabase(":memory:");
 
     rootNote = RootNote::getRootNote();
 
-    headerItem = new NoteItem();
+    noteHeaderItem = new NoteItem();
 
-    rootItem = new NoteItem(rootNote.get(), headerItem);
+    rootItem = new NoteItem(rootNote.get(), noteHeaderItem);
 
     idToItem.insert(rootNote->getId(), rootItem);
 
@@ -54,58 +54,21 @@ MainWindow::MainWindow(QWidget* parent) :
         parent->addChild(item);
     }
 
-    auto onAddSubnote = [this](){
-        bool ok;
-        QString title = QInputDialog::getText(this, tr("Add Subnote"),
-                                             tr("Title:"), QLineEdit::Normal,
-                                             "", &ok);
-        if (ok && !title.isEmpty()) {
-            auto note = Note::create(title, "", selectedItem->getAsAbstractNote()->getId());
-            Note* noteptr = note.get();
-            notes.push_back(std::move(note));
-            noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
-        }
-    };
-
-    auto onRenameNote = [this](){
-        bool ok;
-        QString title = QInputDialog::getText(this, tr("Rename note"),
-                                             tr("New Title:"), QLineEdit::Normal,
-                                             selectedItem->getAsAbstractNote()->getTitle(), &ok);
-        if (ok && !title.isEmpty()) {
-            noteTreeModel->renameNoteAtIndex(title, selectedIndex);
-        }
-    };
-
-    noteTreeModel = make_unique<NoteTreeModel>(headerItem);
+    noteTreeModel = make_unique<NoteTreeModel>(noteHeaderItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
 
-    notesContextMenu.addAction("Open", [this](){
-        Note* note = selectedItem->getAsNote();
-        openNote(note);
-    });
-    notesContextMenu.addAction("Open in new tab", [](){});
-    notesContextMenu.addAction("Add Subnote", onAddSubnote);
-    notesContextMenu.addAction("Rename", onRenameNote);
-    notesContextMenu.addSeparator();
-    notesContextMenu.addAction("Delete", [this](){
-        QMessageBox msgBox;
-        msgBox.setText("Remove note and it's subnotes?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-        int answer = msgBox.exec();
-        if (answer == QMessageBox::Yes) {
-            noteTreeModel->deleteNoteAtIndex(selectedIndex);
-        }
-    });
+    tags = Tag::getAll();
 
-    notesRootContextMenu.addAction("Open", [this](){
-        RootNote* note = selectedItem->getAsRoot();
-        openNote(note);
-    });
-    notesRootContextMenu.addAction("Open in new tab", [](){});
-    notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
-    notesRootContextMenu.addAction("Rename", onRenameNote);
+    tagHeaderItem = new TagItem();
+
+    for(auto& tag : tags) {
+        QString name = tag->getName();
+        QStringList words = name.split(".");
+        tagHeaderItem->placeTag(tag.get(), words);
+    }
+
+    tagTreeModel = make_unique<TagTreeModel>(tagHeaderItem);
+    ui->treeViewTags->setModel(tagTreeModel.get());
 
     aliasesModel = make_unique<QSqlTableModel>();
     aliasesModel->setTable("aliases");
@@ -307,14 +270,66 @@ void MainWindow::on_toolButtonRemoveTag_clicked()
 
 void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point)
 {
-    selectedIndex = ui->treeViewNotes->indexAt(point);
+    QModelIndex selectedIndex = ui->treeViewNotes->indexAt(point);
 
     if (!selectedIndex.isValid())
         return;
 
+    NoteItem* selectedItem = noteTreeModel->itemFromIndex(selectedIndex);
+
+    auto onOpenAction = [this, selectedItem](){
+        AbstractNote* note = selectedItem->getAsAbstractNote();
+        openNote(note);
+    };
+
+    auto onAddSubnote = [this, selectedItem, selectedIndex](){
+        bool ok;
+        QString title = QInputDialog::getText(this, tr("Add Subnote"),
+                                             tr("Title:"), QLineEdit::Normal,
+                                             "", &ok);
+        if (ok && !title.isEmpty()) {
+            auto note = Note::create(title, "", selectedItem->getAsAbstractNote()->getId());
+            Note* noteptr = note.get();
+            notes.push_back(std::move(note));
+            noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
+        }
+    };
+
+    auto onRenameNote = [this, selectedItem, selectedIndex](){
+        bool ok;
+        QString title = QInputDialog::getText(this, tr("Rename note"),
+                                             tr("New Title:"), QLineEdit::Normal,
+                                             selectedItem->getAsAbstractNote()->getTitle(), &ok);
+        if (ok && !title.isEmpty()) {
+            noteTreeModel->renameNoteAtIndex(title, selectedIndex);
+        }
+    };
+
+    auto onDeleteAction = [this, selectedIndex](){
+        QMessageBox msgBox;
+        msgBox.setText("Remove note and it's subnotes?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        int answer = msgBox.exec();
+        if (answer == QMessageBox::Yes) {
+            noteTreeModel->deleteNoteAtIndex(selectedIndex);
+        }
+    };
+
+    notesContextMenu.addAction("Open", onOpenAction);
+    notesContextMenu.addAction("Open in new tab", [](){});
+    notesContextMenu.addAction("Add Subnote", onAddSubnote);
+    notesContextMenu.addAction("Rename", onRenameNote);
+    notesContextMenu.addSeparator();
+    notesContextMenu.addAction("Delete", onDeleteAction);
+
+    notesRootContextMenu.addAction("Open", onOpenAction);
+    notesRootContextMenu.addAction("Open in new tab", [](){});
+    notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
+    notesRootContextMenu.addAction("Rename", onRenameNote);
+
     auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
 
-    selectedItem = noteTreeModel->itemFromIndex(selectedIndex);
     if (selectedItem == rootItem) {
         notesRootContextMenu.exec(globalPoint);
     } else {

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "../models/NoteTreeModel.h"
+#include "../models/TagTreeModel.h"
 
 #include <QMainWindow>
 #include <QMenu>
@@ -42,9 +43,7 @@ private:
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
 
-    //QMap<QString, AbstractNote*> titleTo;
-
-    NoteItem* headerItem;
+    NoteItem* noteHeaderItem;
     QHash<Id, NoteItem*> idToItem;
     NoteItem* rootItem;
 
@@ -52,10 +51,15 @@ private:
 
     QMenu notesContextMenu;
     QMenu notesRootContextMenu;
-    QModelIndex selectedIndex;
-    NoteItem* selectedItem;
 
     AbstractNote* currentNote;
+
+    vector<unique_ptr<Tag>> tags;
+
+    TagItem* tagHeaderItem;
+    QHash<QString, TagItem*> firstWordToItem;
+
+    unique_ptr<TagTreeModel> tagTreeModel;
 
     unique_ptr<QSqlQueryModel> searchModel;
     unique_ptr<QSqlTableModel> aliasesModel;

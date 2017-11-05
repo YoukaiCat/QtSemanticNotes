@@ -1,12 +1,45 @@
 #ifndef TAGTREEMODEL_H
 #define TAGTREEMODEL_H
 
+#include "../trees/TagItem.h"
+
 #include <QAbstractItemModel>
+#include <QModelIndex>
+#include <QVariant>
 
 class TagTreeModel : public QAbstractItemModel
 {
+    Q_OBJECT
+
 public:
-    TagTreeModel();
+    TagTreeModel(TagItem* rootItem, QObject* parent = 0);
+    ~TagTreeModel();
+
+    QVariant data(const QModelIndex& index, int role) const override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+
+    QModelIndex index(int row, int column,
+                      const QModelIndex& parent = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex& index) const override;
+
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
+
+    QStringList mimeTypes() const override;
+
+    QMimeData* mimeData(const QModelIndexList& indexes) const override;
+
+    TagItem* itemFromIndex(const QModelIndex& index) const;
+
+    void renameTagAtIndex(const QString& name, const QModelIndex& index);
+    void deleteTagAtIndex(const QModelIndex& index);
+
+private:
+    TagItem* rootItem;
 };
+
 
 #endif // TAGTREEMODEL_H
