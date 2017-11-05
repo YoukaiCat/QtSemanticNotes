@@ -37,6 +37,9 @@ public slots:
     void on_treeViewNotes_customContextMenuRequested(const QPoint & point);
     void on_treeViewNotes_clicked(const QModelIndex &index);
 
+    void on_treeViewTags_customContextMenuRequested(const QPoint & point);
+    void on_treeViewTags_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainWindow* ui;
 
@@ -51,6 +54,8 @@ private:
 
     QMenu notesContextMenu;
     QMenu notesRootContextMenu;
+
+    QMenu tagsContextMenu;
 
     AbstractNote* currentNote;
 

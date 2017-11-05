@@ -171,6 +171,9 @@
             </property>
             <item>
              <widget class="QTreeView" name="treeViewTags">
+              <property name="contextMenuPolicy">
+               <enum>Qt::CustomContextMenu</enum>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
@@ -185,6 +188,9 @@
               </property>
               <property name="headerHidden">
                <bool>true</bool>
+              </property>
+              <property name="expandsOnDoubleClick">
+               <bool>false</bool>
               </property>
              </widget>
             </item>

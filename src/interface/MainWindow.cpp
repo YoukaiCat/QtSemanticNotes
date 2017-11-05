@@ -343,3 +343,50 @@ void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
     auto note = item->getAsAbstractNote();
     openNote(note);
 }
+
+void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
+{
+    QModelIndex selectedIndex = ui->treeViewTags->indexAt(point);
+
+    if (!selectedIndex.isValid())
+        return;
+
+    TagItem* selectedItem = tagTreeModel->itemFromIndex(selectedIndex);
+
+    auto onFindAction = [this, selectedItem](){};
+
+    auto onDeleteAction = [this, selectedItem, selectedIndex](){
+        QMessageBox msgBox;
+        msgBox.setText("Remove tag and it's subtags?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::Yes);
+        int answer = msgBox.exec();
+        if (answer == QMessageBox::Yes) {
+            QStringList words;
+            QString fulltag = selectedItem->getFullTag(words);
+            QSqlQuery q;
+            if (selectedItem->childCount() == 0) {
+                fulltag.append(".");
+                q.prepare("DELETE FROM tags "
+                          "WHERE name LIKE ':name%'");
+            } else {
+                q.prepare("DELETE FROM tags "
+                          "WHERE name = :name");
+            }
+            q.bindValue(":name", fulltag);
+            Database::safeExecPreparedQuery(q);
+            tagTreeModel->deleteTagAtIndex(selectedIndex);
+        }
+    };
+
+    tagsContextMenu.addAction("Find By Tag", onFindAction);
+    tagsContextMenu.addSeparator();
+    tagsContextMenu.addAction("Delete", onDeleteAction);
+
+    auto globalPoint = ui->treeViewTags->viewport()->mapToGlobal(point);
+
+    tagsContextMenu.exec(globalPoint);
+}
+
+void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
+{}

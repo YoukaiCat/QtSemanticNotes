@@ -114,8 +114,9 @@ QMimeData* TagTreeModel::mimeData(const QModelIndexList& indexes) const
     for(const QModelIndex& index : indexes) {
         if (index.isValid()) {
             TagItem* item = itemFromIndex(index);
-            quintptr intptr = reinterpret_cast<quintptr>(item);
-            stream << intptr;
+            QStringList words;
+            QString fullTag = item->getFullTag(words);
+            stream << fullTag;
         }
     }
 
@@ -126,17 +127,6 @@ QMimeData* TagTreeModel::mimeData(const QModelIndexList& indexes) const
 inline TagItem* TagTreeModel::itemFromIndex(const QModelIndex& index) const
 {
     return static_cast<TagItem*>(index.internalPointer());
-}
-
-void TagTreeModel::renameTagAtIndex(const QString& name, const QModelIndex& index)
-{
-    if (!index.isValid())
-        return;
-
-//    TagItem* item = itemFromIndex(index);
-//    item->getTag()->setName(name);
-
-    emit dataChanged(index, index, QVector<int>());
 }
 
 void TagTreeModel::deleteTagAtIndex(const QModelIndex& index)
@@ -152,7 +142,5 @@ void TagTreeModel::deleteTagAtIndex(const QModelIndex& index)
         parent->removeChild(row);
     endRemoveRows();
 
-    //SubTags should be removed by sql trigger
-//    item->getTag()->remove();
-//    delete item;
+    delete item;
 }
