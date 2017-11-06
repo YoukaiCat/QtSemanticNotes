@@ -159,10 +159,7 @@ unique_ptr<Note> Note::create(const QString& title, const QString& content, cons
         insertNotesQuery.bindValue(":updated_at", now_s);
         Database::safeExecPreparedQuery(insertNotesQuery);
 
-        QSqlQuery rowIdQuery;
-        rowIdQuery.prepare("SELECT last_insert_rowid()");
-        Database::safeExecPreparedQuery(rowIdQuery);
-        id = rowIdQuery.value(0).toUInt();
+        id = insertNotesQuery.lastInsertId().toUInt();
 
         QSqlQuery insertRelationsQuery;
         insertRelationsQuery.prepare("INSERT INTO relations (note_id, parent_id, created_at, updated_at) "

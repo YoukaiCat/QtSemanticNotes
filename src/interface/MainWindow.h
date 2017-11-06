@@ -11,6 +11,8 @@
 #include <QSqlTableModel>
 #include <QSqlRelationalTableModel>
 
+#include <QTextDocument>
+
 namespace Ui {
 class MainWindow;
 }
@@ -24,9 +26,14 @@ public:
     ~MainWindow();
 
 public slots:
+    void on_actionSave_triggered();
+    void on_actionViewMode_triggered();
     void on_actionAboutQt_triggered();
 
     void openNote(AbstractNote* note);
+
+    void loadPossibleLinks();
+    QString makeLinks(QString text);
 
     void on_toolButtonAddAlias_clicked();
     void on_toolButtonRemoveAlias_clicked();
@@ -40,7 +47,7 @@ public slots:
     void on_treeViewTags_customContextMenuRequested(const QPoint& point);
     void on_treeViewTags_doubleClicked(const QModelIndex& index);
 
-    void on_tableViewSearch_doubleClicked(const QModelIndex& index);
+    void on_tableViewSearch_clicked(const QModelIndex& index);
 
 private:
     Ui::MainWindow* ui;
@@ -60,6 +67,10 @@ private:
 
     unique_ptr<NoteTreeModel> noteTreeModel;
     unique_ptr<TagTreeModel> tagTreeModel;
+
+    QString possibleLinks;
+
+    QTextDocument content;
 
     unique_ptr<QSqlQueryModel> searchModel;
     unique_ptr<QSqlTableModel> aliasesModel;

@@ -18,6 +18,8 @@
 
 #include <QItemSelectionModel>
 
+#include <QRegularExpression>
+
 #include <QDebug>
 
 #include <memory>
@@ -30,8 +32,8 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
 
     Database db;
-    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    db.openDatabase(":memory:");
+    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    //db.openDatabase(":memory:");
 
     rootNote = RootNote::getRootNote();
 
@@ -137,11 +139,26 @@ MainWindow::MainWindow(QWidget* parent) :
 
     searchModel = make_unique<QSqlQueryModel>();
     ui->tableViewSearch->setModel(searchModel.get());
+
+    loadPossibleLinks();
+
+    ui->textBrowserNoteContent->setDocument(&content);
+
+    connect(&content, &QTextDocument::contentsChanged, [this](){
+        this->setWindowModified(true);
+    });
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    currentNote->setContent(content.toRawText());
+    //currentNote->update();
+    setWindowModified(false);
 }
 
 void MainWindow::on_actionAboutQt_triggered()
@@ -153,7 +170,16 @@ void MainWindow::openNote(AbstractNote* note)
 {
     currentNote = note;
 
-    QString title = QString("QtSemanticNotes | %1").arg(note->getTitle());
+    content.setPlainText(note->getContent());
+    if (note->getContent().size() == 0) {
+        ui->textBrowserNoteContent->setReadOnly(false);
+    } else {
+        ui->textBrowserNoteContent->setDocument(nullptr);
+        ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
+        ui->textBrowserNoteContent->setReadOnly(true);
+    }
+
+    QString title = QString("%1[*] — QtSemanticNotes").arg(note->getTitle());
     setWindowTitle(title);
 
     ui->tabWidgetNotes->setTabText(ui->tabWidgetNotes->currentIndex(), note->getTitle());
@@ -165,8 +191,6 @@ void MainWindow::openNote(AbstractNote* note)
     ui->tableViewLinksTo->setEnabled(true);
     ui->toolButtonAddAlias->setEnabled(true);
     ui->toolButtonAddTag->setEnabled(true);
-
-    ui->textBrowserNoteContent->setText(note->getContent());
 
     QString idFilter = QString("note_id = %1").arg(note->getId());
 
@@ -181,6 +205,40 @@ void MainWindow::openNote(AbstractNote* note)
 
     linksToModel->setFilter(idFilter);
     linksToModel->select();
+}
+
+void MainWindow::loadPossibleLinks()
+{
+    QSqlQuery q;
+    q.prepare("SELECT id, title, length(title) FROM notes "
+              "UNION "
+              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
+              "JOIN aliases ON aliases.note_id = notes.id "
+              "ORDER BY 3 DESC");
+    Database::safeExecPreparedQuery(q);
+
+    QStringList possibleLinksList;
+    while(q.next())
+        possibleLinksList.append(q.value(1).toString());
+    possibleLinks = possibleLinksList.join('|');
+}
+
+QString MainWindow::makeLinks(QString rightPart)
+{
+    QStringList parts;
+    QString leftPart;
+    QRegularExpression titlesRegex("(" + possibleLinks + ")", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = titlesRegex.match(rightPart);
+    while(match.hasMatch()) {
+        QString link = QString("<a href='https://1'>%1</a>").arg(match.captured(0));
+        leftPart = rightPart.left(match.capturedStart() + match.capturedLength());
+        rightPart = rightPart.mid(match.capturedStart() + match.capturedLength());
+        leftPart.replace(match.capturedStart(), match.capturedLength(), link);
+        parts.append(leftPart);
+        match = titlesRegex.match(rightPart);
+    }
+    parts.append(rightPart);
+    return parts.join("");
 }
 
 void MainWindow::on_toolButtonAddAlias_clicked()
@@ -411,12 +469,25 @@ void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
     ui->tableViewSearch->setColumnHidden(0, true);
 }
 
-void MainWindow::on_tableViewSearch_doubleClicked(const QModelIndex& index)
+void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
 {
     QSqlRecord note = searchModel->record(index.row());
     uint id = note.value("id").toUInt();
     if (idToItem.contains(id)) {
         NoteItem* item = idToItem.value(id);
         openNote(item->getAsAbstractNote());
+    }
+}
+
+//"java virtual machine" (java virtual machine|virtual machine|machine|java)
+void MainWindow::on_actionViewMode_triggered()
+{
+    if (ui->textBrowserNoteContent->isReadOnly()) {
+        ui->textBrowserNoteContent->setDocument(&content);
+        ui->textBrowserNoteContent->setReadOnly(false);
+    } else {
+        ui->textBrowserNoteContent->setDocument(nullptr);
+        ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
+        ui->textBrowserNoteContent->setReadOnly(true);
     }
 }
