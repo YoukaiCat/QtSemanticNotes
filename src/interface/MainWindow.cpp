@@ -230,7 +230,7 @@ QString MainWindow::makeLinks(QString rightPart)
     QRegularExpression titlesRegex("(" + possibleLinks + ")", QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatch match = titlesRegex.match(rightPart);
     while(match.hasMatch()) {
-        QString link = QString("<a href='https://1'>%1</a>").arg(match.captured(0));
+        QString link = QString("<a href='qtsemanticnotes://1'>%1</a>").arg(match.captured(0));
         leftPart = rightPart.left(match.capturedStart() + match.capturedLength());
         rightPart = rightPart.mid(match.capturedStart() + match.capturedLength());
         leftPart.replace(match.capturedStart(), match.capturedLength(), link);
@@ -245,8 +245,8 @@ void MainWindow::on_toolButtonAddAlias_clicked()
 {
     bool ok;
     QString alias = QInputDialog::getText(this, tr("Add Alias"),
-                                         tr("Alias name:"), QLineEdit::Normal,
-                                         "", &ok);
+                                          tr("Alias name:"), QLineEdit::Normal,
+                                          "", &ok);
     if (ok && !alias.isEmpty()) {
         QDateTime now = QDateTime::currentDateTime();
         QString now_s = now.toString(Qt::ISODateWithMs);
@@ -294,7 +294,7 @@ void MainWindow::on_toolButtonAddTag_clicked()
         } else {
             QSqlQuery insertTagQuery;
             insertTagQuery.prepare("INSERT INTO tags (name, created_at, updated_at) "
-                      "VALUES (:name, :created_at, :updated_at)");
+                                   "VALUES (:name, :created_at, :updated_at)");
             insertTagQuery.bindValue(":name", name);
             insertTagQuery.bindValue(":created_at", now_s);
             insertTagQuery.bindValue(":updated_at", now_s);
@@ -309,7 +309,7 @@ void MainWindow::on_toolButtonAddTag_clicked()
 
         QSqlQuery insertNoteTagsQuery;
         insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at, updated_at) "
-                  "VALUES (:note_id, :tag_id, :created_at, :updated_at)");
+                                    "VALUES (:note_id, :tag_id, :created_at, :updated_at)");
         insertNoteTagsQuery.bindValue(":note_id", currentNote->getId());
         insertNoteTagsQuery.bindValue(":tag_id", id);
         insertNoteTagsQuery.bindValue(":created_at", now_s);
@@ -346,8 +346,8 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     auto onAddSubnote = [this, selectedItem, selectedIndex](){
         bool ok;
         QString title = QInputDialog::getText(this, tr("Add Subnote"),
-                                             tr("Title:"), QLineEdit::Normal,
-                                             "", &ok);
+                                              tr("Title:"), QLineEdit::Normal,
+                                              "", &ok);
         if (ok && !title.isEmpty()) {
             auto note = Note::create(title, "", selectedItem->getAsAbstractNote()->getId());
             Note* noteptr = note.get();
@@ -359,8 +359,8 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     auto onRenameNote = [this, selectedItem, selectedIndex](){
         bool ok;
         QString title = QInputDialog::getText(this, tr("Rename note"),
-                                             tr("New Title:"), QLineEdit::Normal,
-                                             selectedItem->getAsAbstractNote()->getTitle(), &ok);
+                                              tr("New Title:"), QLineEdit::Normal,
+                                              selectedItem->getAsAbstractNote()->getTitle(), &ok);
         if (ok && !title.isEmpty()) {
             noteTreeModel->renameNoteAtIndex(title, selectedIndex);
         }

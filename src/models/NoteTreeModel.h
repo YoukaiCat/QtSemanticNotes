@@ -12,7 +12,7 @@ class NoteTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    NoteTreeModel(NoteItem* rootItem, QObject* parent = 0);
+    NoteTreeModel(NoteItem* rootItem, QObject* parent = nullptr);
     ~NoteTreeModel();
 
     QVariant data(const QModelIndex& index, int role) const override;

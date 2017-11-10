@@ -33,7 +33,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
-        return 0;
+        return Qt::NoItemFlags;
 
     return Qt::ItemIsDragEnabled |
            Qt::ItemIsDropEnabled |

@@ -16,9 +16,9 @@ using std::monostate;
 class NoteItem
 {
 public:
-    explicit NoteItem(NoteItem* parent = 0);
-    explicit NoteItem(RootNote* note, NoteItem* parent = 0);
-    explicit NoteItem(Note* note, NoteItem* parent = 0);
+    explicit NoteItem(NoteItem* parent = nullptr);
+    explicit NoteItem(RootNote* note, NoteItem* parent = nullptr);
+    explicit NoteItem(Note* note, NoteItem* parent = nullptr);
     ~NoteItem();
 
     void addChild(NoteItem* item);

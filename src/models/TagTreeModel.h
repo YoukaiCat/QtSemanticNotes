@@ -12,7 +12,7 @@ class TagTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    TagTreeModel(TagItem* rootItem, QObject* parent = 0);
+    TagTreeModel(TagItem* rootItem, QObject* parent = nullptr);
     ~TagTreeModel();
 
     QVariant data(const QModelIndex& index, int role) const override;

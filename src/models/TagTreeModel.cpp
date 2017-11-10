@@ -33,7 +33,7 @@ QVariant TagTreeModel::data(const QModelIndex& index, int role) const
 Qt::ItemFlags TagTreeModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
-        return 0;
+        return Qt::NoItemFlags;
 
     return Qt::ItemIsDragEnabled | QAbstractItemModel::flags(index);
 }
