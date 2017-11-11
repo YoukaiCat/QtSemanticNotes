@@ -18,33 +18,13 @@ using std::move;
 class Note
 {
 public:
-    virtual ~Note() {}
-
-//    inline Note(Note&& other) noexcept
-//        : id(move(other.id)),
-//          title(move(other.title)),
-//          content(move(other.content)),
-//          createdAt(move(other.createdAt)),
-//          updatedAt(move(other.updatedAt)),
-//          parentId(move(other.parentId))
-//    {}
-
-//    inline Note & operator=(Note&& other) noexcept
-//    {
-//        id = move(other.id);
-//        title = move(other.title);
-//        content = move(other.content);
-//        createdAt = move(other.createdAt);
-//        updatedAt = move(other.updatedAt);
-//        parentId = move(other.parentId);
-//        return *this;
-//    }
-
-    Note(const Note&) = delete;
-    Note & operator=(const Note&) = delete;
-
+    static unique_ptr<Note> create(const QString& title,
+                                   const QString& content,
+                                   const Id& parentId);
     static vector<unique_ptr<Note>> getAll();
     static optional<unique_ptr<Note>> getById(const Id& id);
+
+    virtual ~Note() {}
 
     virtual Id getId() const;
 
@@ -62,11 +42,13 @@ public:
 
     virtual QString toString() const;
 
-    static unique_ptr<Note> create(const QString& title,
-                                   const QString& content,
-                                   const Id& parentId);
     virtual void update();
     virtual void remove();
+
+    Note(const Note&) = delete;
+    Note & operator=(const Note&) = delete;
+    Note(Note&& other) noexcept = delete;
+    Note & operator=(Note&& other) noexcept = delete;
 
 protected:
     Id id;

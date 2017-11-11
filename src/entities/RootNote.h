@@ -6,27 +6,6 @@
 class RootNote : public Note
 {
 public:
-//    inline RootNote(RootNote&& other) noexcept
-//        : id(move(other.id)),
-//          title(move(other.title)),
-//          content(move(other.content)),
-//          createdAt(move(other.createdAt)),
-//          updatedAt(move(other.updatedAt))
-//    {}
-
-//    inline RootNote & operator=(RootNote&& other) noexcept
-//    {
-//        id = move(other.id);
-//        title = move(other.title);
-//        content = move(other.content);
-//        createdAt = move(other.createdAt);
-//        updatedAt = move(other.updatedAt);
-//        return *this;
-//    }
-
-    RootNote(const RootNote&) = delete;
-    RootNote & operator=(const RootNote&) = delete;
-
     static unique_ptr<RootNote> getRootNote();
 
     virtual Id getParentId() const override;
@@ -36,6 +15,11 @@ public:
 
     void update() override;
     void remove() override;
+
+    RootNote(const RootNote&) = delete;
+    RootNote & operator=(const RootNote&) = delete;
+    RootNote(RootNote&& other) noexcept = delete;
+    RootNote & operator=(RootNote&& other) noexcept = delete;
 
 private:
     RootNote(const Id& id,

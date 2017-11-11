@@ -150,8 +150,6 @@ unique_ptr<Note> Note::create(const QString& title,
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
 
-    Id id;
-
     QSqlQuery insertNotesQuery;
     insertNotesQuery.prepare("INSERT INTO notes (title, content, created_at, updated_at, parent_id) "
                              "VALUES (:title, :content, :created_at, :updated_at, :parent_id)");
@@ -162,7 +160,7 @@ unique_ptr<Note> Note::create(const QString& title,
     insertNotesQuery.bindValue(":parent_id", parentId);
     Database::safeExecPreparedQuery(insertNotesQuery);
 
-    unique_ptr<Note> note(new Note(id, title, content, now, now, parentId));
+    unique_ptr<Note> note(new Note(insertNotesQuery.lastInsertId().toUInt(), title, content, now, now, parentId));
     return note;
 }
 

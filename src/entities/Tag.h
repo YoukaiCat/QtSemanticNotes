@@ -1,6 +1,8 @@
 #ifndef TAG_H
 #define TAG_H
 
+#include "Id.h"
+
 #include <QString>
 #include <QDateTime>
 
@@ -12,30 +14,10 @@ using std::optional;
 using std::unique_ptr;
 using std::move;
 
-typedef uint Id;
-
 class Tag
 {
 public:
-    inline Tag(Tag&& other) noexcept
-        : id(move(other.id)),
-          name(move(other.name)),
-          createdAt(move(other.createdAt)),
-          updatedAt(move(other.updatedAt))
-    {}
-
-    inline Tag & operator=(Tag&& other) noexcept
-    {
-        id = move(other.id);
-        name = move(other.name);
-        createdAt = move(other.createdAt);
-        updatedAt = move(other.updatedAt);
-        return *this;
-    }
-
-    Tag(const Tag&) = delete;
-    Tag & operator=(const Tag&) = delete;
-
+    static unique_ptr<Tag> create(const QString& name);
     static vector<unique_ptr<Tag>> getAll();
     static optional<unique_ptr<Tag>> getById(const Id& id);
 
@@ -49,10 +31,12 @@ public:
 
     QString toString() const;
 
-    static unique_ptr<Tag> create(const QString& name);
-
-    void update();
     void remove();
+
+    Tag(const Tag&) = delete;
+    Tag & operator=(const Tag&) = delete;
+    Tag(Tag&& other) noexcept = delete;
+    Tag & operator=(Tag&& other) noexcept = delete;
 
 private:
     Tag(const Id& id,
