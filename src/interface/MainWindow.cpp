@@ -42,8 +42,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     ui->textBrowserNoteContent->setDocument(&content);
 
-    connect(&content, &QTextDocument::contentsChanged,
-            this, &MainWindow::onContentModified);
+    connect(&content, &QTextDocument::contentsChanged, this, &MainWindow::onContentModified);
 }
 
 MainWindow::~MainWindow()
@@ -53,7 +52,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::onContentModified()
 {
-    this->setWindowModified(true);
+    setWindowModified(true);
+    ui->actionSave->setEnabled(true);
 }
 
 //TODO SqlCipher
@@ -110,6 +110,24 @@ void MainWindow::setupTagsTree()
     ui->treeViewTags->setModel(tagTreeModel.get());
 }
 
+void MainWindow::toggleRemoveTagButtonEnabled()
+{
+    if(ui->tableViewNoteTags->selectionModel()->selectedIndexes().size() > 0) {
+        ui->toolButtonRemoveTag->setEnabled(true);
+    } else {
+        ui->toolButtonRemoveTag->setEnabled(false);
+    }
+}
+
+void MainWindow::toggleRemoveAliasButtonEnabled()
+{
+    if(ui->tableViewAliases->selectionModel()->selectedIndexes().size() > 0) {
+        ui->toolButtonRemoveAlias->setEnabled(true);
+    } else {
+        ui->toolButtonRemoveAlias->setEnabled(false);
+    }
+}
+
 void MainWindow::setupNoteModels()
 {
     aliasesModel = make_unique<QSqlTableModel>();
@@ -120,18 +138,8 @@ void MainWindow::setupNoteModels()
     ui->tableViewAliases->hideColumn(2);
     ui->tableViewAliases->hideColumn(3);
 
-    connect(ui->tableViewAliases->selectionModel(),
-            &QItemSelectionModel::selectionChanged,
-            [this](const QItemSelection &selected, const QItemSelection &deselected)
-    {
-        Q_UNUSED(selected)
-        Q_UNUSED(deselected)
-        if(ui->tableViewAliases->selectionModel()->selectedIndexes().size() > 0) {
-            ui->toolButtonRemoveAlias->setEnabled(true);
-        } else {
-            ui->toolButtonRemoveAlias->setEnabled(false);
-        }
-    });
+    connect(ui->tableViewAliases->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &MainWindow::toggleRemoveAliasButtonEnabled);
 
     tagsModel = make_unique<QSqlRelationalTableModel>();
     tagsModel->setTable("note_tags");
@@ -142,18 +150,8 @@ void MainWindow::setupNoteModels()
     ui->tableViewNoteTags->hideColumn(1);
     ui->tableViewNoteTags->hideColumn(3);
 
-    connect(ui->tableViewNoteTags->selectionModel(),
-            &QItemSelectionModel::selectionChanged,
-            [this](const QItemSelection &selected, const QItemSelection &deselected)
-    {
-        Q_UNUSED(selected)
-        Q_UNUSED(deselected)
-        if(ui->tableViewNoteTags->selectionModel()->selectedIndexes().size() > 0) {
-            ui->toolButtonRemoveTag->setEnabled(true);
-        } else {
-            ui->toolButtonRemoveTag->setEnabled(false);
-        }
-    });
+    connect(ui->tableViewNoteTags->selectionModel(),&QItemSelectionModel::selectionChanged,
+            this, &MainWindow::toggleRemoveTagButtonEnabled);
 
     linkedFromModel = make_unique<QSqlRelationalTableModel>();
     linkedFromModel->setTable("links");
@@ -172,7 +170,6 @@ void MainWindow::setupNoteModels()
     ui->tableViewLinksTo->hideColumn(0);
     ui->tableViewLinksTo->hideColumn(1);
     ui->tableViewLinksTo->hideColumn(3);
-
 }
 
 void MainWindow::setupSearchModel()
@@ -184,13 +181,25 @@ void MainWindow::setupSearchModel()
 void MainWindow::on_actionSave_triggered()
 {
     currentNote->setContent(content.toRawText());
-    //currentNote->update();
+    currentNote->update();
     setWindowModified(false);
+    ui->actionSave->setEnabled(false);
 }
 
-void MainWindow::on_actionAboutQt_triggered()
+void MainWindow::enableViewMode()
 {
-    qApp->aboutQt();
+    ui->textBrowserNoteContent->setDocument(nullptr);
+    ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
+    ui->textBrowserNoteContent->setReadOnly(true);
+}
+
+void MainWindow::chooseModeToEnable(Note* note)
+{
+    if (note->getContent().size() == 0) {
+        enableEditMode();
+    } else {
+        enableViewMode();
+    }
 }
 
 void MainWindow::openNote(Note* note)
@@ -198,18 +207,13 @@ void MainWindow::openNote(Note* note)
     currentNote = note;
 
     content.setPlainText(note->getContent());
-    if (note->getContent().size() == 0) {
-        ui->textBrowserNoteContent->setReadOnly(false);
-    } else {
-        ui->textBrowserNoteContent->setDocument(nullptr);
-        ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
-        ui->textBrowserNoteContent->setReadOnly(true);
-    }
+
+    chooseModeToEnable(note);
 
     QString title = QString("%1[*] — QtSemanticNotes").arg(note->getTitle());
     setWindowTitle(title);
 
-    ui->tabWidgetNotes->setTabText(ui->tabWidgetNotes->currentIndex(), note->getTitle());
+    ui->tabWidgetNotes->setTabText(0, note->getTitle());
 
     ui->textBrowserNoteContent->setEnabled(true);
     ui->tableViewAliases->setEnabled(true);
@@ -218,36 +222,22 @@ void MainWindow::openNote(Note* note)
     ui->tableViewLinksTo->setEnabled(true);
     ui->toolButtonAddAlias->setEnabled(true);
     ui->toolButtonAddTag->setEnabled(true);
+    ui->actionViewMode->setEnabled(true);
 
     QString idFilter = QString("note_id = %1").arg(note->getId());
-
     aliasesModel->setFilter(idFilter);
     aliasesModel->select();
-
     tagsModel->setFilter(idFilter);
     tagsModel->select();
-
     linkedFromModel->setFilter(idFilter);
     linkedFromModel->select();
-
     linksToModel->setFilter(idFilter);
     linksToModel->select();
 }
 
 void MainWindow::loadPossibleLinks()
 {
-    QSqlQuery q;
-    q.prepare("SELECT id, title, length(title) FROM notes "
-              "UNION "
-              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
-              "JOIN aliases ON aliases.note_id = notes.id "
-              "ORDER BY 3 DESC");
-    Database::safeExecPreparedQuery(q);
-
-    QStringList possibleLinksList;
-    while(q.next())
-        possibleLinksList.append(q.value(1).toString());
-    possibleLinks = possibleLinksList.join('|');
+    possibleLinks = Note::getPossibleLinks().join('|');
 }
 
 QString MainWindow::makeLinks(QString rightPart)
@@ -303,42 +293,8 @@ void MainWindow::on_toolButtonAddTag_clicked()
                                          tr("Tag name:"), QLineEdit::Normal,
                                          "", &ok);
     if (ok && !name.isEmpty()) {
-        QDateTime now = QDateTime::currentDateTime();
-        QString now_s = now.toString(Qt::ISODateWithMs);
-
-        uint id;
-
-        QSqlQuery tagIdQuery;
-        tagIdQuery.prepare("SELECT id FROM tags "
-                           "WHERE name = :name");
-        tagIdQuery.bindValue(":name", name);
-        Database::safeExecPreparedQuery(tagIdQuery);
-
-        if (tagIdQuery.next()) {
-            id = tagIdQuery.value(0).toUInt();
-        } else {
-            QSqlQuery insertTagQuery;
-            insertTagQuery.prepare("INSERT INTO tags (name, created_at) "
-                                   "VALUES (:name, :created_at)");
-            insertTagQuery.bindValue(":name", name);
-            insertTagQuery.bindValue(":created_at", now_s);
-            Database::safeExecPreparedQuery(insertTagQuery);
-
-            QSqlQuery rowIdQuery;
-            rowIdQuery.prepare("SELECT last_insert_rowid()");
-            Database::safeExecPreparedQuery(rowIdQuery);
-            rowIdQuery.next();
-            id = rowIdQuery.value(0).toUInt();
-        }
-
-        QSqlQuery insertNoteTagsQuery;
-        insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at) "
-                                    "VALUES (:note_id, :tag_id, :created_at)");
-        insertNoteTagsQuery.bindValue(":note_id", currentNote->getId());
-        insertNoteTagsQuery.bindValue(":tag_id", id);
-        insertNoteTagsQuery.bindValue(":created_at", now_s);
-        Database::safeExecPreparedQuery(insertNoteTagsQuery);
-
+        auto tag = Tag::getOrCreate(name);
+        Tag::addNoteTags(currentNote, tag.get());
         tagsModel->select();
     }
 }
@@ -430,6 +386,7 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
 
     auto onFindAction = [this, selectedItem](){};
 
+    //"java virtual machine" (java virtual machine|virtual machine|machine|java)
     auto onDeleteAction = [this, selectedItem, selectedIndex](){
         QMessageBox msgBox;
         msgBox.setText("Remove tag and it's subtags?");
@@ -491,16 +448,18 @@ void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
     }
 }
 
-//"java virtual machine" (java virtual machine|virtual machine|machine|java)
+void MainWindow::enableEditMode()
+{
+    ui->textBrowserNoteContent->setDocument(&content);
+    ui->textBrowserNoteContent->setReadOnly(false);
+}
+
 void MainWindow::on_actionViewMode_triggered()
 {
     if (ui->textBrowserNoteContent->isReadOnly()) {
-        ui->textBrowserNoteContent->setDocument(&content);
-        ui->textBrowserNoteContent->setReadOnly(false);
+        enableEditMode();
     } else {
-        ui->textBrowserNoteContent->setDocument(nullptr);
-        ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
-        ui->textBrowserNoteContent->setReadOnly(true);
+        enableViewMode();
     }
 }
 
@@ -513,4 +472,9 @@ void MainWindow::on_actionAboutQtSemanticNotes_triggered()
     msgBox.setText(QString("Version: %1").arg(TOSTRING(VERSION)));
 #endif
     msgBox.exec();
+}
+
+void MainWindow::on_actionAboutQt_triggered()
+{
+    qApp->aboutQt();
 }

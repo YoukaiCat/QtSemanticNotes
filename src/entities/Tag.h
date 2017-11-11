@@ -2,6 +2,7 @@
 #define TAG_H
 
 #include "Id.h"
+#include "Note.h"
 
 #include <QString>
 #include <QDateTime>
@@ -18,8 +19,10 @@ class Tag
 {
 public:
     static unique_ptr<Tag> create(const QString& name);
+    static unique_ptr<Tag> getOrCreate(const QString& name);
     static vector<unique_ptr<Tag>> getAll();
     static optional<unique_ptr<Tag>> getById(const Id& id);
+    static optional<unique_ptr<Tag>> getByName(const QString& name);
 
     Id getId() const;
 
@@ -27,7 +30,6 @@ public:
     void setName(const QString& name);
 
     QDateTime getCreatedAt() const;
-    QDateTime getUpdatedAt() const;
 
     QString toString() const;
 
@@ -38,16 +40,16 @@ public:
     Tag(Tag&& other) noexcept = delete;
     Tag & operator=(Tag&& other) noexcept = delete;
 
+    static void addNoteTags(const Note* note, const Tag* tag);
+
 private:
     Tag(const Id& id,
         const QString& name,
-        const QDateTime& createdAt,
-        const QDateTime& updatedAt);
+        const QDateTime& createdAt);
 
     Id id;
     QString name;
     QDateTime createdAt;
-    QDateTime updatedAt;
 };
 
 #endif // TAG_H

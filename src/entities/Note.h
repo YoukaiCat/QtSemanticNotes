@@ -49,6 +49,8 @@ public:
     Note(Note&& other) noexcept = delete;
     Note & operator=(Note&& other) noexcept = delete;
 
+    static QStringList getPossibleLinks();
+
 protected:
     Id id;
     QString title;

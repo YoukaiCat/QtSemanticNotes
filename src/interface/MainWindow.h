@@ -27,6 +27,8 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
+
+
 public slots:
     void setupDatabase();
     void setupNotesTree();
@@ -35,6 +37,8 @@ public slots:
 
     void loadPossibleLinks();
     QString makeLinks(QString text);
+
+    void chooseModeToEnable(Note* note);
 
     void on_actionSave_triggered();
     void on_actionViewMode_triggered();
@@ -61,6 +65,13 @@ public slots:
     void setupSearchModel();
 
     void onContentModified();
+
+    void toggleRemoveTagButtonEnabled();
+    void toggleRemoveAliasButtonEnabled();
+
+    void enableViewMode();
+
+    void enableEditMode();
 
 private:
     Ui::MainWindow* ui;

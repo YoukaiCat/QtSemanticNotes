@@ -205,3 +205,19 @@ void Note::remove()
     q.bindValue(":id", id);
     Database::safeExecPreparedQuery(q);
 }
+
+QStringList Note::getPossibleLinks()
+{
+    QSqlQuery q;
+    q.prepare("SELECT id, title, length(title) FROM notes "
+              "UNION "
+              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
+              "JOIN aliases ON aliases.note_id = notes.id "
+              "ORDER BY 3 DESC");
+    Database::safeExecPreparedQuery(q);
+
+    QStringList possibleLinksList;
+    while(q.next())
+        possibleLinksList.append(q.value(1).toString());
+    return possibleLinksList;
+}

@@ -113,10 +113,19 @@ void Database::defineSchema()
             "id INTEGER PRIMARY KEY, "
             "title TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "content CLOB NOT NULL DEFAULT '', "
-            "parent_id INTEGER REFERENCES notes(id) ON DELETE CASCADE, "
+            "parent_id INTEGER REFERENCES notes(id), "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
         ")");
+
+    //For some magical reason recursive ON DELETE CASCADE
+    //doesn't work when using qt sqlite driver so using a recursive trigger
+    safeExecQuery(
+        "CREATE TRIGGER after_delete_note_delete_subnotes "
+        "AFTER DELETE ON notes "
+        "BEGIN "
+            "DELETE FROM notes WHERE parent_id = OLD.id; "
+        "END;");
 
     safeExecQuery("CREATE INDEX notes_parent_id_fk ON notes(parent_id)");
 
@@ -181,7 +190,7 @@ void Database::defineSchema()
         ")");
 
     safeExecQuery(
-        "CREATE TRIGGER after_INSERT_note_update_index "
+        "CREATE TRIGGER after_insert_note_update_index "
         "AFTER INSERT ON notes "
         "BEGIN "
             "INSERT INTO notes_fts(rowid, title, content) "
