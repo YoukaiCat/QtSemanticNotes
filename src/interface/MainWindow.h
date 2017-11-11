@@ -28,6 +28,11 @@ public:
     ~MainWindow();
 
 public slots:
+    void setupDatabase();
+    void setupNotesTree();
+    void setupTagsTree();
+
+
     void on_actionSave_triggered();
     void on_actionViewMode_triggered();
     void on_actionAboutQt_triggered();
@@ -56,12 +61,7 @@ private:
 
     unique_ptr<RootNote> rootNote;
     vector<unique_ptr<Note>> notes;
-
     QHash<Id, NoteItem*> idToItem;
-
-    //~~~
-
-    Note* currentNote;
 
     NoteItem* noteRootItem;
     TagItem* tagRootItem;
@@ -70,6 +70,8 @@ private:
     unique_ptr<TagTreeModel> tagTreeModel;
 
     QString possibleLinks;
+
+    Note* currentNote;
 
     QTextDocument content;
 

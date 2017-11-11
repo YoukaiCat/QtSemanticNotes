@@ -1124,7 +1124,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Add Note</string>
+    <string>Add</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>

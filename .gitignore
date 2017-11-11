@@ -1,2 +1,4 @@
 QtSemanticNotes.qbs.user
 default/
+release/
+debug/

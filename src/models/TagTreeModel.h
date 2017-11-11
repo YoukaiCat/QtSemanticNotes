@@ -34,7 +34,6 @@ public:
 
     TagItem* itemFromIndex(const QModelIndex& index) const;
 
-    void renameTagAtIndex(const QString& name, const QModelIndex& index);
     void deleteTagAtIndex(const QModelIndex& index);
 
 private:

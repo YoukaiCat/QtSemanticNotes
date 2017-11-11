@@ -31,44 +31,9 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
-    Database db;
-    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    db.openDatabase(":memory:");
-
-    rootNote = RootNote::getRootNote();
-
-    noteRootItem = new NoteItem(rootNote.get());
-
-    idToItem.insert(rootNote->getId(), noteRootItem);
-
-    notes = Note::getAll();
-
-    for(auto& note : notes) {
-        NoteItem* item = new NoteItem(note.get());
-        idToItem.insert(note->getId(), item);
-    }
-
-    for(auto& note : notes) {
-        NoteItem* item = idToItem[note->getId()];
-        NoteItem* parent = idToItem[note->getParentId()];
-        parent->addChild(item);
-    }
-
-    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
-    ui->treeViewNotes->setModel(noteTreeModel.get());
-
-    auto tags = Tag::getAll();
-
-    tagRootItem = new TagItem();
-
-    for(auto& tag : tags) {
-        QString name = tag->getName();
-        QStringList words = name.split(".");
-        tagRootItem->insert(words);
-    }
-
-    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
-    ui->treeViewTags->setModel(tagTreeModel.get());
+    setupDatabase();
+    setupNotesTree();
+    setupTagsTree();
 
     aliasesModel = make_unique<QSqlTableModel>();
     aliasesModel->setTable("aliases");
@@ -146,6 +111,50 @@ MainWindow::MainWindow(QWidget* parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setupDatabase()
+{
+    Database db;
+    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    db.openDatabase(":memory:");
+}
+
+void MainWindow::setupNotesTree()
+{
+    rootNote = RootNote::getRootNote();
+    noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
+    idToItem.insert(rootNote->getId(), noteRootItem);
+
+    notes = Note::getAll();
+    for(auto& note : notes) {
+        NoteItem* item = new NoteItem(note.get());
+        idToItem.insert(note->getId(), item);
+    }
+    for(auto& note : notes) {
+        NoteItem* item = idToItem[note->getId()];
+        NoteItem* parent = idToItem[note->getParentId()];
+        parent->addChild(item);
+    }
+
+    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
+    ui->treeViewNotes->setModel(noteTreeModel.get());
+}
+
+void MainWindow::setupTagsTree()
+{
+    tagRootItem = new TagItem(); //Model is the owner
+
+    vector<unique_ptr<Tag>> tags = Tag::getAll();
+    for(auto& tag : tags) {
+        QString name = tag->getName();
+        //TODO Preferences for tag part separator
+        QStringList words = name.split(".");
+        tagRootItem->insert(words);
+    }
+
+    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
+    ui->treeViewTags->setModel(tagTreeModel.get());
 }
 
 void MainWindow::on_actionSave_triggered()
