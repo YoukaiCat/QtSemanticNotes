@@ -6,6 +6,7 @@
 #include "../entities/Note.h"
 #include "../entities/RootNote.h"
 #include "../entities/Tag.h"
+#include "../entities/Search.h"
 
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -240,6 +241,7 @@ void MainWindow::loadPossibleLinks()
     possibleLinks = Note::getPossibleLinks().join('|');
 }
 
+//"java virtual machine" (java virtual machine|virtual machine|machine|java)
 QString MainWindow::makeLinks(QString rightPart)
 {
     QStringList parts;
@@ -308,14 +310,54 @@ void MainWindow::on_toolButtonRemoveTag_clicked()
     tagsModel->select();
 }
 
+void MainWindow::addSubnote()
+{
+    bool ok;
+    QString title = QInputDialog::getText(this, tr("Add Subnote"),
+                                          tr("Title:"), QLineEdit::Normal,
+                                          "", &ok);
+    if (ok && !title.isEmpty()) {
+        auto note = Note::create(title, "", selectedItem->getValue()->getId());
+        Note* noteptr = note.get();
+        notes.push_back(std::move(note));
+        noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
+    }
+}
+
+void MainWindow::renameNote()
+{
+    bool ok;
+    QString title = QInputDialog::getText(this, tr("Rename note"),
+                                          tr("New Title:"), QLineEdit::Normal,
+                                          selectedItem->getValue()->getTitle(), &ok);
+    if (ok && !title.isEmpty()) {
+        noteTreeModel->renameNoteAtIndex(title, selectedIndex);
+    }
+}
+
+void MainWindow::deleteNote()
+{
+    QMessageBox msgBox;
+    msgBox.setText("Remove note and it's subnotes?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    int answer = msgBox.exec();
+    if (answer == QMessageBox::Yes) {
+        noteTreeModel->deleteNoteAtIndex(selectedIndex);
+    }
+}
+
 void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point)
 {
     QModelIndex selectedIndex = ui->treeViewNotes->indexAt(point);
 
-    if (!selectedIndex.isValid())
-        return;
-
     auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
+
+    if (!selectedIndex.isValid()) {
+        QMenu notesContextMenu;
+        notesContextMenu.addAction("Add Subnote", addNote);
+        return;
+    }
 
     NoteItem* selectedItem = noteTreeModel->itemFromIndex(selectedIndex);
 
@@ -360,7 +402,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
 
     QMenu notesContextMenu;
     notesContextMenu.addAction("Open", onOpenAction);
-    notesContextMenu.addAction("Open in New Tab", [](){});
+    notesContextMenu.addAction("Open in New Tab", onOpenAction);
     notesContextMenu.addAction("Add Subnote", onAddSubnote);
     notesContextMenu.addAction("Rename", onRenameNote);
     notesContextMenu.addSeparator();
@@ -373,6 +415,23 @@ void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
     auto item = noteTreeModel->itemFromIndex(index);
     auto note = item->getValue();
     openNote(note);
+
+    ui->actionOpen->setEnabled(true);
+    ui->actionOpenInNewTab->setEnabled(true);
+    ui->actionRename->setEnabled(true);
+    ui->actionSave->setEnabled(true);
+    ui->actionDelete->setEnabled(true);
+
+//    disconnect(ui->actionOpen, SIGNAL(triggered(bool)));
+//    connect(ui->actionOpen, &QAction::triggered, onOpenAction);
+//    disconnect(ui->actionOpenInNewTab, SIGNAL(triggered(bool)));
+//    connect(ui->actionOpenInNewTab, &QAction::triggered, onOpenAction);
+    disconnect(ui->actionAdd, SIGNAL(triggered(bool)));
+    connect(ui->actionAdd, &QAction::triggered, this, &MainWindow::addSubnote);
+    disconnect(ui->actionSave, SIGNAL(triggered(bool)));
+    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveNote);
+    disconnect(ui->actionDelete, SIGNAL(triggered(bool)));
+    connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteNode);
 }
 
 void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
@@ -386,7 +445,6 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
 
     auto onFindAction = [this, selectedItem](){};
 
-    //"java virtual machine" (java virtual machine|virtual machine|machine|java)
     auto onDeleteAction = [this, selectedItem, selectedIndex](){
         QMessageBox msgBox;
         msgBox.setText("Remove tag and it's subtags?");
@@ -396,14 +454,7 @@ void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
         if (answer == QMessageBox::Yes) {
             QStringList words;
             QString fulltag = selectedItem->getFullTag(words);
-            QSqlQuery q;
-            //cs.lang.java AND cs.lang.java.*
-            //cs but not cs* (csgo for ex)
-            q.prepare("DELETE FROM tags "
-                      "WHERE name = :name OR name LIKE :like_name || '%'");
-            q.bindValue(":name", fulltag);
-            q.bindValue(":like_name", fulltag.append('.'));
-            Database::safeExecPreparedQuery(q);
+            Tag::deleteTagAndSubtags(fulltag);
             tagTreeModel->deleteTagAtIndex(selectedIndex);
         }
     };
@@ -423,17 +474,7 @@ void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
     TagItem* selectedItem = tagTreeModel->itemFromIndex(index);
     QStringList words;
     QString fulltag = selectedItem->getFullTag(words);
-    QSqlQuery q;
-    q.prepare("SELECT notes.id, notes.title "
-              "FROM notes "
-              "JOIN note_tags ON note_tags.note_id = notes.id "
-              "JOIN tags ON tags.id = note_tags.tag_id "
-              "WHERE tags.name = :name OR tags.name LIKE :like_name || '%'");
-    q.bindValue(":name", fulltag);
-    q.bindValue(":like_name", fulltag.append('.'));
-    Database::safeExecPreparedQuery(q);
-
-    searchModel->setQuery(q);
+    searchModel->setQuery(Search::findNotesByTag(fulltag));
     searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
     ui->tableViewSearch->setColumnHidden(0, true);
 }

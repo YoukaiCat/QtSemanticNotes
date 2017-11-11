@@ -73,6 +73,12 @@ public slots:
 
     void enableEditMode();
 
+    void addSubnote();
+
+    void renameNote();
+
+    void deleteNote();
+
 private:
     Ui::MainWindow* ui;
 

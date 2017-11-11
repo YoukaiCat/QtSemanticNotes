@@ -145,3 +145,15 @@ void Tag::addNoteTags(const Note* note, const Tag* tag)
     insertNoteTagsQuery.bindValue(":created_at", now_s);
     Database::safeExecPreparedQuery(insertNoteTagsQuery);
 }
+
+//cs.lang.java AND cs.lang.java.*
+//cs but not cs* (csgo for ex)
+void Tag::deleteTagAndSubtags(const QString& fulltag)
+{
+    QSqlQuery q;
+    q.prepare("DELETE FROM tags "
+              "WHERE name = :name OR name LIKE :like_name || '%'");
+    q.bindValue(":name", fulltag);
+    q.bindValue(":like_name", fulltag + '.');
+    Database::safeExecPreparedQuery(q);
+}
