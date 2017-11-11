@@ -827,9 +827,6 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAboutQtSemanticNotes">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="icon">
     <iconset theme="help-about">
      <normaloff>.</normaloff>.</iconset>

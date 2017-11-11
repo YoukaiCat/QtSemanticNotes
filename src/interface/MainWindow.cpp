@@ -35,7 +35,83 @@ MainWindow::MainWindow(QWidget* parent) :
     setupDatabase();
     setupNotesTree();
     setupTagsTree();
+    setupNoteModels();
+    setupSearchModel();
 
+    loadPossibleLinks();
+
+    ui->textBrowserNoteContent->setDocument(&content);
+
+    connect(&content, &QTextDocument::contentsChanged,
+            this, &MainWindow::onContentModified);
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::onContentModified()
+{
+    this->setWindowModified(true);
+}
+
+//TODO SqlCipher
+void MainWindow::setupDatabase()
+{
+    Database db;
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+
+    if(path.isEmpty()) {} //No writable location
+
+    QDir dir;
+    if(!dir.mkpath(path)) {} //Can not create app directory
+
+    path.append("/QtSemanticNotes.sqlite");
+    //QString path = "/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite";
+    //QString path = ":memory:";
+    db.openDatabase(path);
+}
+
+void MainWindow::setupNotesTree()
+{
+    rootNote = RootNote::getRootNote();
+    noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
+    idToItem.insert(rootNote->getId(), noteRootItem);
+
+    notes = Note::getAll();
+    for(auto& note : notes) {
+        NoteItem* item = new NoteItem(note.get());
+        idToItem.insert(note->getId(), item);
+    }
+    for(auto& note : notes) {
+        NoteItem* item = idToItem[note->getId()];
+        NoteItem* parent = idToItem[note->getParentId()];
+        parent->addChild(item);
+    }
+
+    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
+    ui->treeViewNotes->setModel(noteTreeModel.get());
+}
+
+void MainWindow::setupTagsTree()
+{
+    tagRootItem = new TagItem(); //Model is the owner
+
+    vector<unique_ptr<Tag>> tags = Tag::getAll();
+    for(auto& tag : tags) {
+        QString name = tag->getName();
+        //TODO Preferences for tag part separator
+        QStringList words = name.split(".");
+        tagRootItem->insert(words);
+    }
+
+    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
+    ui->treeViewTags->setModel(tagTreeModel.get());
+}
+
+void MainWindow::setupNoteModels()
+{
     aliasesModel = make_unique<QSqlTableModel>();
     aliasesModel->setTable("aliases");
     aliasesModel->setEditStrategy(QSqlTableModel::OnFieldChange);
@@ -97,74 +173,12 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewLinksTo->hideColumn(1);
     ui->tableViewLinksTo->hideColumn(3);
 
+}
+
+void MainWindow::setupSearchModel()
+{
     searchModel = make_unique<QSqlQueryModel>();
     ui->tableViewSearch->setModel(searchModel.get());
-
-    loadPossibleLinks();
-
-    ui->textBrowserNoteContent->setDocument(&content);
-
-    connect(&content, &QTextDocument::contentsChanged, [this](){
-        this->setWindowModified(true);
-    });
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::setupDatabase()
-{
-    Database db;
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-
-    if(path.isEmpty()) {} //No writable location
-
-    QDir dir;
-    if(!dir.mkpath(path)) {} //Can not create app directory
-
-    path.append("/QtSemanticNotes.sqlite");
-    //QString path = "/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite";
-    //QString path = ":memory:";
-    db.openDatabase(path);
-}
-
-void MainWindow::setupNotesTree()
-{
-    rootNote = RootNote::getRootNote();
-    noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
-    idToItem.insert(rootNote->getId(), noteRootItem);
-
-    notes = Note::getAll();
-    for(auto& note : notes) {
-        NoteItem* item = new NoteItem(note.get());
-        idToItem.insert(note->getId(), item);
-    }
-    for(auto& note : notes) {
-        NoteItem* item = idToItem[note->getId()];
-        NoteItem* parent = idToItem[note->getParentId()];
-        parent->addChild(item);
-    }
-
-    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
-    ui->treeViewNotes->setModel(noteTreeModel.get());
-}
-
-void MainWindow::setupTagsTree()
-{
-    tagRootItem = new TagItem(); //Model is the owner
-
-    vector<unique_ptr<Tag>> tags = Tag::getAll();
-    for(auto& tag : tags) {
-        QString name = tag->getName();
-        //TODO Preferences for tag part separator
-        QStringList words = name.split(".");
-        tagRootItem->insert(words);
-    }
-
-    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
-    ui->treeViewTags->setModel(tagTreeModel.get());
 }
 
 void MainWindow::on_actionSave_triggered()
@@ -488,4 +502,15 @@ void MainWindow::on_actionViewMode_triggered()
         ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
         ui->textBrowserNoteContent->setReadOnly(true);
     }
+}
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+void MainWindow::on_actionAboutQtSemanticNotes_triggered()
+{
+    QMessageBox msgBox;
+#ifdef VERSION
+    msgBox.setText(QString("Version: %1").arg(TOSTRING(VERSION)));
+#endif
+    msgBox.exec();
 }

@@ -31,16 +31,18 @@ public slots:
     void setupDatabase();
     void setupNotesTree();
     void setupTagsTree();
-
-
-    void on_actionSave_triggered();
-    void on_actionViewMode_triggered();
-    void on_actionAboutQt_triggered();
-
-    void openNote(Note* note);
+    void setupNoteModels();
 
     void loadPossibleLinks();
     QString makeLinks(QString text);
+
+    void on_actionSave_triggered();
+    void on_actionViewMode_triggered();
+
+    void on_actionAboutQtSemanticNotes_triggered();
+    void on_actionAboutQt_triggered();
+
+    void openNote(Note* note);
 
     void on_toolButtonAddAlias_clicked();
     void on_toolButtonRemoveAlias_clicked();
@@ -55,6 +57,10 @@ public slots:
     void on_treeViewTags_doubleClicked(const QModelIndex& index);
 
     void on_tableViewSearch_clicked(const QModelIndex& index);
+
+    void setupSearchModel();
+
+    void onContentModified();
 
 private:
     Ui::MainWindow* ui;
