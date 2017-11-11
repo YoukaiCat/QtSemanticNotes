@@ -9,7 +9,6 @@
 #include <vector>
 #include <optional>
 #include <memory>
-
 using std::vector;
 using std::optional;
 using std::unique_ptr;

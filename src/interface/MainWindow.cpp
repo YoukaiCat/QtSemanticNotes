@@ -7,8 +7,6 @@
 #include "../entities/RootNote.h"
 #include "../entities/Tag.h"
 
-#include <QHash>
-
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlRelation>
@@ -19,6 +17,9 @@
 #include <QItemSelectionModel>
 
 #include <QRegularExpression>
+
+#include <QDir>
+#include <QStandardPaths>
 
 #include <QDebug>
 
@@ -116,8 +117,17 @@ MainWindow::~MainWindow()
 void MainWindow::setupDatabase()
 {
     Database db;
-    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    db.openDatabase(":memory:");
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+
+    if(path.isEmpty()) {} //No writable location
+
+    QDir dir;
+    if(!dir.mkpath(path)) {} //Can not create app directory
+
+    path.append("/QtSemanticNotes.sqlite");
+    //QString path = "/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite";
+    //QString path = ":memory:";
+    db.openDatabase(path);
 }
 
 void MainWindow::setupNotesTree()
