@@ -3,7 +3,6 @@
 
 #include "../database/Database.h"
 
-#include "../entities/AbstractNote.h"
 #include "../entities/Note.h"
 #include "../entities/RootNote.h"
 
@@ -32,16 +31,14 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->setupUi(this);
 
     Database db;
-    db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
-    //db.openDatabase(":memory:");
+    //db.openDatabase("/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite");
+    db.openDatabase(":memory:");
 
     rootNote = RootNote::getRootNote();
 
-    noteHeaderItem = new NoteItem();
+    noteRootItem = new NoteItem(rootNote.get());
 
-    rootItem = new NoteItem(rootNote.get(), noteHeaderItem);
-
-    idToItem.insert(rootNote->getId(), rootItem);
+    idToItem.insert(rootNote->getId(), noteRootItem);
 
     notes = Note::getAll();
 
@@ -56,20 +53,20 @@ MainWindow::MainWindow(QWidget* parent) :
         parent->addChild(item);
     }
 
-    noteTreeModel = make_unique<NoteTreeModel>(noteHeaderItem);
+    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
 
     auto tags = Tag::getAll();
 
-    tagHeaderItem = new TagItem();
+    tagRootItem = new TagItem();
 
     for(auto& tag : tags) {
         QString name = tag->getName();
         QStringList words = name.split(".");
-        tagHeaderItem->insert(words);
+        tagRootItem->insert(words);
     }
 
-    tagTreeModel = make_unique<TagTreeModel>(tagHeaderItem);
+    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
     ui->treeViewTags->setModel(tagTreeModel.get());
 
     aliasesModel = make_unique<QSqlTableModel>();
@@ -79,7 +76,6 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewAliases->hideColumn(0);
     ui->tableViewAliases->hideColumn(2);
     ui->tableViewAliases->hideColumn(3);
-    ui->tableViewAliases->hideColumn(4);
 
     connect(ui->tableViewAliases->selectionModel(),
             &QItemSelectionModel::selectionChanged,
@@ -102,7 +98,6 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewNoteTags->hideColumn(0);
     ui->tableViewNoteTags->hideColumn(1);
     ui->tableViewNoteTags->hideColumn(3);
-    ui->tableViewNoteTags->hideColumn(4);
 
     connect(ui->tableViewNoteTags->selectionModel(),
             &QItemSelectionModel::selectionChanged,
@@ -125,7 +120,6 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewLinkedFrom->hideColumn(0);
     ui->tableViewLinkedFrom->hideColumn(2);
     ui->tableViewLinkedFrom->hideColumn(3);
-    ui->tableViewLinkedFrom->hideColumn(4);
 
     linksToModel = make_unique<QSqlRelationalTableModel>();
     linksToModel->setTable("links");
@@ -135,7 +129,6 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->tableViewLinksTo->hideColumn(0);
     ui->tableViewLinksTo->hideColumn(1);
     ui->tableViewLinksTo->hideColumn(3);
-    ui->tableViewLinksTo->hideColumn(4);
 
     searchModel = make_unique<QSqlQueryModel>();
     ui->tableViewSearch->setModel(searchModel.get());
@@ -166,7 +159,7 @@ void MainWindow::on_actionAboutQt_triggered()
     qApp->aboutQt();
 }
 
-void MainWindow::openNote(AbstractNote* note)
+void MainWindow::openNote(Note* note)
 {
     currentNote = note;
 
@@ -256,7 +249,6 @@ void MainWindow::on_toolButtonAddAlias_clicked()
         record.setValue("alias", alias);
         record.setValue("note_id", currentNote->getId());
         record.setValue("created_at", now_s);
-        record.setValue("updated_at", now_s);
         aliasesModel->insertRecord(-1, record);
     }
 }
@@ -283,8 +275,7 @@ void MainWindow::on_toolButtonAddTag_clicked()
         uint id;
 
         QSqlQuery tagIdQuery;
-        tagIdQuery.prepare("SELECT id "
-                           "FROM tags "
+        tagIdQuery.prepare("SELECT id FROM tags "
                            "WHERE name = :name");
         tagIdQuery.bindValue(":name", name);
         Database::safeExecPreparedQuery(tagIdQuery);
@@ -293,11 +284,10 @@ void MainWindow::on_toolButtonAddTag_clicked()
             id = tagIdQuery.value(0).toUInt();
         } else {
             QSqlQuery insertTagQuery;
-            insertTagQuery.prepare("INSERT INTO tags (name, created_at, updated_at) "
-                                   "VALUES (:name, :created_at, :updated_at)");
+            insertTagQuery.prepare("INSERT INTO tags (name, created_at) "
+                                   "VALUES (:name, :created_at)");
             insertTagQuery.bindValue(":name", name);
             insertTagQuery.bindValue(":created_at", now_s);
-            insertTagQuery.bindValue(":updated_at", now_s);
             Database::safeExecPreparedQuery(insertTagQuery);
 
             QSqlQuery rowIdQuery;
@@ -308,12 +298,11 @@ void MainWindow::on_toolButtonAddTag_clicked()
         }
 
         QSqlQuery insertNoteTagsQuery;
-        insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at, updated_at) "
-                                    "VALUES (:note_id, :tag_id, :created_at, :updated_at)");
+        insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at) "
+                                    "VALUES (:note_id, :tag_id, :created_at)");
         insertNoteTagsQuery.bindValue(":note_id", currentNote->getId());
         insertNoteTagsQuery.bindValue(":tag_id", id);
         insertNoteTagsQuery.bindValue(":created_at", now_s);
-        insertNoteTagsQuery.bindValue(":updated_at", now_s);
         Database::safeExecPreparedQuery(insertNoteTagsQuery);
 
         tagsModel->select();
@@ -336,10 +325,12 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     if (!selectedIndex.isValid())
         return;
 
+    auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
+
     NoteItem* selectedItem = noteTreeModel->itemFromIndex(selectedIndex);
 
     auto onOpenAction = [this, selectedItem](){
-        AbstractNote* note = selectedItem->getAsAbstractNote();
+        Note* note = selectedItem->getValue();
         openNote(note);
     };
 
@@ -349,7 +340,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
                                               tr("Title:"), QLineEdit::Normal,
                                               "", &ok);
         if (ok && !title.isEmpty()) {
-            auto note = Note::create(title, "", selectedItem->getAsAbstractNote()->getId());
+            auto note = Note::create(title, "", selectedItem->getValue()->getId());
             Note* noteptr = note.get();
             notes.push_back(std::move(note));
             noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
@@ -360,7 +351,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
         bool ok;
         QString title = QInputDialog::getText(this, tr("Rename note"),
                                               tr("New Title:"), QLineEdit::Normal,
-                                              selectedItem->getAsAbstractNote()->getTitle(), &ok);
+                                              selectedItem->getValue()->getTitle(), &ok);
         if (ok && !title.isEmpty()) {
             noteTreeModel->renameNoteAtIndex(title, selectedIndex);
         }
@@ -384,26 +375,13 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     notesContextMenu.addAction("Rename", onRenameNote);
     notesContextMenu.addSeparator();
     notesContextMenu.addAction("Delete", onDeleteAction);
-
-    QMenu notesRootContextMenu;
-    notesRootContextMenu.addAction("Open", onOpenAction);
-    notesRootContextMenu.addAction("Open in new tab", [](){});
-    notesRootContextMenu.addAction("Add Subnote", onAddSubnote);
-    notesRootContextMenu.addAction("Rename", onRenameNote);
-
-    auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
-
-    if (selectedItem == rootItem) {
-        notesRootContextMenu.exec(globalPoint);
-    } else {
-        notesContextMenu.exec(globalPoint);
-    }
+    notesContextMenu.exec(globalPoint);
 }
 
 void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
 {
     auto item = noteTreeModel->itemFromIndex(index);
-    auto note = item->getAsAbstractNote();
+    auto note = item->getValue();
     openNote(note);
 }
 
@@ -475,7 +453,7 @@ void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
     uint id = note.value("id").toUInt();
     if (idToItem.contains(id)) {
         NoteItem* item = idToItem.value(id);
-        openNote(item->getAsAbstractNote());
+        openNote(item->getValue());
     }
 }
 

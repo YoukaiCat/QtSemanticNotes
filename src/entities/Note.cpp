@@ -9,18 +9,25 @@
 
 using std::make_unique;
 
-inline Note::Note(const Id& id, const QString& title, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
-    : AbstractNote(),
-      id(id),
+inline Note::Note(const Id& id,
+                  const QString& title,
+                  const QDateTime& createdAt,
+                  const QDateTime& updatedAt,
+                  const Id& parentId)
+    : id(id),
       title(title),
       createdAt(createdAt),
       updatedAt(updatedAt),
       parentId(parentId)
 {}
 
-inline Note::Note(const Id& id, const QString& title, const optional<QString>& content, const QDateTime& createdAt, const QDateTime& updatedAt, const Id& parentId)
-    : AbstractNote(),
-      id(id),
+inline Note::Note(const Id& id,
+                  const QString& title,
+                  const optional<QString>& content,
+                  const QDateTime& createdAt,
+                  const QDateTime& updatedAt,
+                  const Id& parentId)
+    : id(id),
       title(title),
       content(content),
       createdAt(createdAt),
@@ -31,21 +38,18 @@ inline Note::Note(const Id& id, const QString& title, const optional<QString>& c
 vector<unique_ptr<Note>> Note::getAll()
 {
     QSqlQuery q;
-    q.prepare("SELECT notes.id, notes.title, "
-              "notes.created_at, notes.updated_at, relations.parent_id "
-              "FROM notes JOIN relations ON relations.note_id = notes.id "
-              "WHERE NOT notes.id = 1");
+    q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes "
+              "WHERE NOT id = 1");
     Database::safeExecPreparedQuery(q);
 
     vector<unique_ptr<Note>> notes;
     while (q.next()) {
-        notes.emplace_back(
-                make_unique<Note>(
-                    Note(q.value(0).toUInt(),
-                         q.value(1).toString(),
-                         q.value(2).toDateTime(),
-                         q.value(3).toDateTime(),
-                         q.value(4).toUInt())));
+        unique_ptr<Note> note(new Note(q.value(0).toUInt(),
+                                       q.value(1).toString(),
+                                       q.value(2).toDateTime(),
+                                       q.value(3).toDateTime(),
+                                       q.value(4).toUInt()));
+        notes.push_back(move(note));
     }
     return notes;
 }
@@ -53,20 +57,18 @@ vector<unique_ptr<Note>> Note::getAll()
 optional<unique_ptr<Note>> Note::getById(const Id& id)
 {
     QSqlQuery q;
-    q.prepare("SELECT notes.id, notes.title, "
-              "notes.created_at, notes.updated_at, relations.parent_id "
-              "FROM notes JOIN relations ON relations.note_id = notes.id "
-              "WHERE notes.id = :id AND NOT notes.id = 1");
+    q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes"
+              "WHERE id = :id AND NOT id = 1");
     q.bindValue(":id", id);
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        return make_unique<Note>(
-                    Note(q.value(0).toUInt(),
-                         q.value(1).toString(),
-                         q.value(2).toDateTime(),
-                         q.value(3).toDateTime(),
-                         q.value(4).toUInt()));
+        unique_ptr<Note> note(new Note(q.value(0).toUInt(),
+                                       q.value(1).toString(),
+                                       q.value(2).toDateTime(),
+                                       q.value(3).toDateTime(),
+                                       q.value(4).toUInt()));
+        return note;
     } else {
         return {};
     }
@@ -141,41 +143,27 @@ QString Note::toString() const
             .arg(parentId);
 }
 
-unique_ptr<Note> Note::create(const QString& title, const QString& content, const Id& parentId)
+unique_ptr<Note> Note::create(const QString& title,
+                              const QString& content,
+                              const Id& parentId)
 {
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
 
     Id id;
 
-    QSqlDatabase::database().transaction();
-    try {
-        QSqlQuery insertNotesQuery;
-        insertNotesQuery.prepare("INSERT INTO notes (title, content, created_at, updated_at) "
-                  "VALUES (:title, :content, :created_at, :updated_at)");
-        insertNotesQuery.bindValue(":title", title);
-        insertNotesQuery.bindValue(":content", content);
-        insertNotesQuery.bindValue(":created_at", now_s);
-        insertNotesQuery.bindValue(":updated_at", now_s);
-        Database::safeExecPreparedQuery(insertNotesQuery);
+    QSqlQuery insertNotesQuery;
+    insertNotesQuery.prepare("INSERT INTO notes (title, content, created_at, updated_at, parent_id) "
+                             "VALUES (:title, :content, :created_at, :updated_at, :parent_id)");
+    insertNotesQuery.bindValue(":title", title);
+    insertNotesQuery.bindValue(":content", content);
+    insertNotesQuery.bindValue(":created_at", now_s);
+    insertNotesQuery.bindValue(":updated_at", now_s);
+    insertNotesQuery.bindValue(":parent_id", parentId);
+    Database::safeExecPreparedQuery(insertNotesQuery);
 
-        id = insertNotesQuery.lastInsertId().toUInt();
-
-        QSqlQuery insertRelationsQuery;
-        insertRelationsQuery.prepare("INSERT INTO relations (note_id, parent_id, created_at, updated_at) "
-                  "VALUES (:note_id, :parent_id, :created_at, :updated_at)");
-        insertRelationsQuery.bindValue(":note_id", id);
-        insertRelationsQuery.bindValue(":parent_id", parentId);
-        insertRelationsQuery.bindValue(":created_at", now_s);
-        insertRelationsQuery.bindValue(":updated_at", now_s);
-        Database::safeExecPreparedQuery(insertRelationsQuery);
-
-        QSqlDatabase::database().commit();
-    } catch (QueryException e) {
-        QSqlDatabase::database().rollback();
-        throw e;
-    }
-    return make_unique<Note>(Note(id, title, content, now, now, parentId));
+    unique_ptr<Note> note(new Note(id, title, content, now, now, parentId));
+    return note;
 }
 
 void Note::update()
@@ -186,41 +174,26 @@ void Note::update()
     QSqlQuery updateNotesQuery;
     if (content.has_value()) {
         updateNotesQuery.prepare("UPDATE notes "
-                  "SET title = :title, "
-                  "content = :content, "
-                  "updated_at = :updated_at "
-                  "WHERE id = :id");
+                                 "SET title = :title, "
+                                 "content = :content, "
+                                 "updated_at = :updated_at, "
+                                 "parent_id = :parent_id "
+                                 "WHERE id = :id");
         updateNotesQuery.bindValue(":id", id);
         updateNotesQuery.bindValue(":title", title);
         updateNotesQuery.bindValue(":content", content.value());
         updateNotesQuery.bindValue(":updated_at", now_s);
+        updateNotesQuery.bindValue(":parent_id", parentId);
     } else {
         updateNotesQuery.prepare("UPDATE notes "
-                  "SET title = :title, "
-                  "updated_at = :updated_at "
-                  "WHERE id = :id");
+                                 "SET title = :title, "
+                                 "updated_at = :updated_at, "
+                                 "parent_id = :parent_id "
+                                 "WHERE id = :id");
         updateNotesQuery.bindValue(":id", id);
         updateNotesQuery.bindValue(":title", title);
         updateNotesQuery.bindValue(":updated_at", now_s);
-    }
-
-    QSqlQuery updateRelationsQuery;
-    updateRelationsQuery.prepare("UPDATE relations "
-              "SET parent_id = :parent_id, "
-              "updated_at = :updated_at "
-              "WHERE note_id = :note_id");
-    updateRelationsQuery.bindValue(":note_id", id);
-    updateRelationsQuery.bindValue(":parent_id", parentId);
-    updateRelationsQuery.bindValue(":updated_at", now_s);
-
-    QSqlDatabase::database().transaction();
-    try {
-        Database::safeExecPreparedQuery(updateNotesQuery);
-        Database::safeExecPreparedQuery(updateRelationsQuery);
-        QSqlDatabase::database().commit();
-    } catch (QueryException e) {
-        QSqlDatabase::database().rollback();
-        throw e;
+        updateNotesQuery.bindValue(":parent_id", parentId);
     }
 
     updatedAt = now;

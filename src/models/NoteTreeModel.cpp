@@ -27,7 +27,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (role != Qt::DisplayRole)
         return QVariant();
 
-    return itemFromIndex(index)->getAsAbstractNote()->getTitle();
+    return itemFromIndex(index)->getValue()->getTitle();
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
@@ -210,7 +210,7 @@ void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& i
         return;
 
     NoteItem* item = itemFromIndex(index);
-    item->getAsAbstractNote()->setTitle(title);
+    item->getValue()->setTitle(title);
 
     emit dataChanged(index, index, QVector<int>());
 }
@@ -243,6 +243,6 @@ void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
     endRemoveRows();
 
     //Subnotes should be removed by sql trigger
-    item->getAsNote()->remove();
+    item->getValue()->remove();
     delete item;
 }

@@ -49,6 +49,8 @@ public:
             QString m("Query error:\n");
             m.append(q.lastQuery());
             m.append(q.lastError().text());
+            qDebug() << q.lastQuery();
+            qDebug() << q.lastError().text();
             throw QueryException(m);
         }
     }

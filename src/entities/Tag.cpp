@@ -22,7 +22,7 @@ inline Tag::Tag(const Id& id,
 vector<unique_ptr<Tag>> Tag::getAll()
 {
     QSqlQuery q;
-    q.prepare("SELECT id, name, created_at, updated_at FROM tags");
+    q.prepare("SELECT id, name, created_at FROM tags");
     Database::safeExecPreparedQuery(q);
 
     vector<unique_ptr<Tag>> tags;

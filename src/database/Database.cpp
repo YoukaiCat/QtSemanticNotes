@@ -103,62 +103,33 @@ bool Database::isOpen()
 void Database::defineSchema()
 {
 /**
-    notes |#id, title, content|
+    notes |#id, title, content, parent_id|
     |-> aliases |#id, alias, @note_id|
-    |-> relations |#id, @note_id, @parent_id|
     |-> links |#id, @from_note_id, @to_note_id|
     |-> note_tags |#id, @note_id, @tag_id| <- tags |#id, name|
 */
     safeExecQuery(
         "CREATE TABLE notes ( "
             "id INTEGER PRIMARY KEY, "
-            "title TEXT UNIQUE NOT NULL, "
+            "title TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "content CLOB NOT NULL DEFAULT '', "
+            "parent_id INTEGER REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
         ")");
 
-    //query.exec("CREATE INDEX notes_title ON notes(title COLLATE NOCASE)");
-
-    //Remove all subnotes when parent note is deleted
-    safeExecQuery(
-        "CREATE TRIGGER after_delete_note_delete_subnotes "
-        "AFTER DELETE ON notes "
-        "BEGIN "
-            "DELETE FROM notes WHERE notes.id IN "
-                "(SELECT note_id FROM relations WHERE parent_id = OLD.id); "
-        "END");
+    safeExecQuery("CREATE INDEX notes_parent_id_fk ON notes(parent_id)");
 
     safeExecQuery(
         "CREATE TABLE aliases ( "
             "id INTEGER PRIMARY KEY, "
-            "alias TEXT UNIQUE NOT NULL, "
+            "alias TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "UNIQUE(alias, note_id) ON CONFLICT REPLACE "
         ")");
 
-    //query.exec("CREATE INDEX aliases_alias ON aliases(alias COLLATE NOCASE)");
-
     safeExecQuery("CREATE INDEX alias_note_id_fk ON aliases(note_id)");
-
-    //1. Note as child (note_id) relation deleted by ON DELETE CASCADE
-    //2. Note as parent (parent_id) relations implicitly deleted by trigger on_delete_note:
-    //   1. Each subnote itself deleted by DELETE
-    //   2. Each subnote as child (note_id) relation deleted by ON DELETE CASCADE
-    safeExecQuery(
-        "CREATE TABLE relations ( "
-            "id INTEGER PRIMARY KEY, "
-            "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
-            "parent_id INTEGER NOT NULL REFERENCES notes(id), "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "UNIQUE(note_id, parent_id) ON CONFLICT REPLACE "
-        ")");
-
-    safeExecQuery("CREATE INDEX relations_note_id_fk ON relations(note_id)");
-    safeExecQuery("CREATE INDEX relations_parent_id_fk ON relations(parent_id)");
 
     safeExecQuery(
         "CREATE TABLE links ( "
@@ -166,7 +137,6 @@ void Database::defineSchema()
             "from_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "to_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "UNIQUE(from_note_id, to_note_id) ON CONFLICT REPLACE "
         ")");
 
@@ -177,8 +147,7 @@ void Database::defineSchema()
         "CREATE TABLE tags ( "
             "id INTEGER PRIMARY KEY, "
             "name TEXT COLLATE NOCASE UNIQUE NOT NULL, "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
         ")");
 
     safeExecQuery(
@@ -187,7 +156,6 @@ void Database::defineSchema()
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
             "UNIQUE(note_id, tag_id) ON CONFLICT REPLACE "
         ")");
 
@@ -213,7 +181,7 @@ void Database::defineSchema()
         ")");
 
     safeExecQuery(
-        "CREATE TRIGGER after_insert_note_update_index "
+        "CREATE TRIGGER after_INSERT_note_update_index "
         "AFTER INSERT ON notes "
         "BEGIN "
             "INSERT INTO notes_fts(rowid, title, content) "
@@ -269,34 +237,31 @@ void Database::defineSchema()
                 "VALUES (NEW.id, NEW.alias, NEW.note_id); "
         "END;");
 
-    //Root note with id = 1
-    safeExecQuery("insert into notes (id, title)"
-        "values (1, 'root')");
+    //Root note
+    safeExecQuery("INSERT INTO notes (id, title, parent_id)"
+        "values (1, 'root', NULL)");
 
-    safeExecQuery("insert into application (name, database_version)"
+    safeExecQuery("INSERT INTO application (name, database_version)"
         "values ('QtSemanticNotes', '1.0')");
 
-    safeExecQuery("insert into notes (title) values ('1 test')");
-    safeExecQuery("insert into notes (title) values ('2 test')");
-    safeExecQuery("insert into relations (note_id, parent_id) values (2, 1)");
-    safeExecQuery("insert into relations (note_id, parent_id) values (3, 2)");
-    safeExecQuery("insert into notes (title) values ('1-1 test')");
-    safeExecQuery("insert into notes (title) values ('2-2 test')");
-    safeExecQuery("insert into relations (note_id, parent_id) values (4, 1)");
-    safeExecQuery("insert into relations (note_id, parent_id) values (5, 4)");
-    safeExecQuery("insert into aliases (alias, note_id) values ('a b c', 2)");
-    safeExecQuery("insert into aliases (alias, note_id) values ('c d e', 2)");
-    safeExecQuery("insert into aliases (alias, note_id) values ('f g h', 2)");
-    safeExecQuery("insert into tags (name) values ('cs.lang.java')");
-    safeExecQuery("insert into tags (name) values ('cs.lang.scala')");
-    safeExecQuery("insert into tags (name) values ('cs.lang.java.variance')");
-    safeExecQuery("insert into tags (name) values ('cs.netwoking')");
-    safeExecQuery("insert into tags (name) values ('csgo.weapons')");
-    safeExecQuery("insert into tags (name) values ('tag')");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (2, 1)");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (4, 2)");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (3, 3)");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (1, 4)");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (1, 5)");
-    safeExecQuery("insert into note_tags (note_id, tag_id) values (5, 5)");
+    //Test data
+    safeExecQuery("INSERT INTO notes (title, parent_id) values ('1 test', 1)");
+    safeExecQuery("INSERT INTO notes (title, parent_id) values ('2 test', 2)");
+    safeExecQuery("INSERT INTO notes (title, parent_id) values ('1-1 test', 1)");
+    safeExecQuery("INSERT INTO notes (title, parent_id) values ('2-2 test', 4)");
+    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('a b c', 2)");
+    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('c d e', 2)");
+    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('f g h', 2)");
+    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.java')");
+    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.scala')");
+    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.java.variance')");
+    safeExecQuery("INSERT INTO tags (name) values ('cs.netwoking')");
+    safeExecQuery("INSERT INTO tags (name) values ('csgo.weapons')");
+    safeExecQuery("INSERT INTO tags (name) values ('tag')");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (2, 1)");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (4, 2)");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (3, 3)");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 4)");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 5)");
+    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 5)");
 }

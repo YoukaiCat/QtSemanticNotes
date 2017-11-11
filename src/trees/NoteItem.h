@@ -1,23 +1,14 @@
 #ifndef NOTEITEM_H
 #define NOTEITEM_H
 
-#include "../entities/RootNote.h"
 #include "../entities/Note.h"
 
 #include <QList>
 #include <QVariant>
 
-#include <vector>
-#include <variant>
-using std::vector;
-using std::variant;
-using std::monostate;
-
 class NoteItem
 {
 public:
-    explicit NoteItem(NoteItem* parent = nullptr);
-    explicit NoteItem(RootNote* note, NoteItem* parent = nullptr);
     explicit NoteItem(Note* note, NoteItem* parent = nullptr);
     ~NoteItem();
 
@@ -32,12 +23,10 @@ public:
 
     void removeChild(const int& index);
 
-    AbstractNote* getAsAbstractNote() const;
-    RootNote* getAsRoot() const;
-    Note* getAsNote() const;
+    Note* getValue() const;
 
 private:
-    variant<monostate, RootNote*, Note*> value;
+    Note* value;
     QList<NoteItem*> children;
     NoteItem* parent;
 };

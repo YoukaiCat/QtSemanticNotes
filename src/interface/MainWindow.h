@@ -4,6 +4,8 @@
 #include "../models/NoteTreeModel.h"
 #include "../models/TagTreeModel.h"
 
+#include "../entities/RootNote.h"
+
 #include <QMainWindow>
 #include <QMenu>
 
@@ -30,7 +32,7 @@ public slots:
     void on_actionViewMode_triggered();
     void on_actionAboutQt_triggered();
 
-    void openNote(AbstractNote* note);
+    void openNote(Note* note);
 
     void loadPossibleLinks();
     QString makeLinks(QString text);
@@ -56,14 +58,13 @@ private:
     vector<unique_ptr<Note>> notes;
 
     QHash<Id, NoteItem*> idToItem;
-    NoteItem* rootItem;
 
     //~~~
 
-    AbstractNote* currentNote;
+    Note* currentNote;
 
-    NoteItem* noteHeaderItem;
-    TagItem* tagHeaderItem;
+    NoteItem* noteRootItem;
+    TagItem* tagRootItem;
 
     unique_ptr<NoteTreeModel> noteTreeModel;
     unique_ptr<TagTreeModel> tagTreeModel;
