@@ -1,7 +1,5 @@
 #include "TagItem.h"
 
-#include <QMapIterator>
-
 TagItem::TagItem()
     : parent(nullptr)
 {}

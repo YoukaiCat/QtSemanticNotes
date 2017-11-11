@@ -102,7 +102,7 @@ bool Database::isOpen()
 
 void Database::defineSchema()
 {
-/**
+/*
     notes |#id, title, content, parent_id|
     |-> aliases |#id, alias, @note_id|
     |-> links |#id, @from_note_id, @to_note_id|

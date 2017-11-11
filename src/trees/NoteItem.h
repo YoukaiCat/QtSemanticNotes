@@ -4,7 +4,6 @@
 #include "../entities/Note.h"
 
 #include <QList>
-#include <QVariant>
 
 class NoteItem
 {

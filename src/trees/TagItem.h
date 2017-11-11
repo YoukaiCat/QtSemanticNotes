@@ -1,10 +1,8 @@
 #ifndef TAGITEM_H
 #define TAGITEM_H
 
-#include "../entities/Tag.h"
-
 #include <QList>
-#include <QVariant>
+#include <QMap>
 
 class TagItem
 {

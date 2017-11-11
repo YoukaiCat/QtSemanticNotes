@@ -9,6 +9,7 @@ Product {
     }
 
     files: [
+        "resources/resources.qrc",
         "src/*.cpp",
         "src/database/*.h",
         "src/database/*.cpp",

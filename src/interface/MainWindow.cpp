@@ -5,6 +5,7 @@
 
 #include "../entities/Note.h"
 #include "../entities/RootNote.h"
+#include "../entities/Tag.h"
 
 #include <QHash>
 
@@ -370,7 +371,7 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
 
     QMenu notesContextMenu;
     notesContextMenu.addAction("Open", onOpenAction);
-    notesContextMenu.addAction("Open in new tab", [](){});
+    notesContextMenu.addAction("Open in New Tab", [](){});
     notesContextMenu.addAction("Add Subnote", onAddSubnote);
     notesContextMenu.addAction("Rename", onRenameNote);
     notesContextMenu.addSeparator();
