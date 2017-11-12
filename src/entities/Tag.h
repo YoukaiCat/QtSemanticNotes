@@ -42,6 +42,7 @@ public:
 
     static void addNoteTags(const Note* note, const Tag* tag);
     static void deleteTagAndSubtags(const QString& fulltag);
+    static void deleteTagIfNotUsed(const Id& id);
 
 private:
     Tag(const Id& id,

@@ -46,6 +46,7 @@ public:
 
     NoteItem* itemFromIndex(const QModelIndex& index) const;
 
+    QModelIndex getRootIndex();
     void renameNoteAtIndex(const QString& title, const QModelIndex& index);
     void addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex);
     void deleteNoteAtIndex(const QModelIndex& index);

@@ -22,6 +22,7 @@ public:
                                    const Id& parentId);
     static vector<unique_ptr<Note>> getAll();
     static optional<unique_ptr<Note>> getById(const Id& id);
+    static bool existWithTitle(const QString& title);
 
     virtual ~Note() {}
 
@@ -50,6 +51,7 @@ public:
     Note & operator=(Note&& other) noexcept = delete;
 
     static QStringList getPossibleLinks();
+    static void addNoteAlias(const Note* note, const QString& alias);
 
 protected:
     Id id;

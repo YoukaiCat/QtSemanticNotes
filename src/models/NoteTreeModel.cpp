@@ -204,6 +204,11 @@ inline NoteItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
     return static_cast<NoteItem*>(index.internalPointer());
 }
 
+QModelIndex NoteTreeModel::getRootIndex()
+{
+    return index(0, 0, QModelIndex());
+}
+
 void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& index)
 {
     if (!index.isValid())

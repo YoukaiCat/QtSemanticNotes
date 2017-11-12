@@ -43,7 +43,8 @@ MainWindow::MainWindow(QWidget* parent) :
 
     ui->textBrowserNoteContent->setDocument(&content);
 
-    connect(&content, &QTextDocument::contentsChanged, this, &MainWindow::onContentModified);
+    connect(&content, &QTextDocument::contentsChanged,
+            this, &MainWindow::onContentModified);
 }
 
 MainWindow::~MainWindow()
@@ -51,54 +52,84 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::onContentModified()
+//~~~ Setup db and views ~~~~~~~~~~~~~
+
+QString MainWindow::getDatabasePath()
 {
-    setWindowModified(true);
-    ui->actionSave->setEnabled(true);
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if(path.isEmpty()) {
+        showCriticalErrorAndQuit(tr("Data location is not writable"));
+    }
+    QDir dir;
+    if(!dir.mkpath(path)) {
+        showCriticalErrorAndQuit(tr("Can't create app data directory"));
+    }
+    path.append("/QtSemanticNotes.sqlite");
+    return path;
 }
 
-//TODO SqlCipher
 void MainWindow::setupDatabase()
 {
-    Database db;
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-
-    if(path.isEmpty()) {} //No writable location
-
-    QDir dir;
-    if(!dir.mkpath(path)) {} //Can not create app directory
-
-    path.append("/QtSemanticNotes.sqlite");
-    //QString path = "/home/parsee/Projects/Active/QtSemanticNotes/test.sqlite";
-    //QString path = ":memory:";
-    db.openDatabase(path);
+    try {
+        Database::openDatabase(getDatabasePath());
+    } catch (OpenDBException&) {
+        showCriticalErrorAndQuit(tr("Can't open database"));
+    } catch (QueryException&) {
+        showCriticalErrorAndQuit(tr("Can't open database"));
+    }
 }
 
-void MainWindow::setupNotesTree()
+void MainWindow::setupNotesTreeRoot()
 {
     rootNote = RootNote::getRootNote();
     noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
     idToItem.insert(rootNote->getId(), noteRootItem);
+}
 
-    notes = Note::getAll();
+void MainWindow::createItemsForNotes()
+{
     for(auto& note : notes) {
         NoteItem* item = new NoteItem(note.get());
         idToItem.insert(note->getId(), item);
     }
+}
+
+void MainWindow::setItemChilds()
+{
     for(auto& note : notes) {
         NoteItem* item = idToItem[note->getId()];
         NoteItem* parent = idToItem[note->getParentId()];
         parent->addChild(item);
     }
+}
 
+void MainWindow::setupNotesTreeChildren()
+{
+    notes = Note::getAll();
+    createItemsForNotes();
+    setItemChilds();
+}
+
+void MainWindow::setupNotesTreeModel()
+{
     noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
 }
 
-void MainWindow::setupTagsTree()
+void MainWindow::setupNotesTree()
+{
+    setupNotesTreeRoot();
+    setupNotesTreeChildren();
+    setupNotesTreeModel();
+}
+
+void MainWindow::setupTagsTreeRoot()
 {
     tagRootItem = new TagItem(); //Model is the owner
+}
 
+void MainWindow::setupTagsTreeChildren()
+{
     vector<unique_ptr<Tag>> tags = Tag::getAll();
     for(auto& tag : tags) {
         QString name = tag->getName();
@@ -106,9 +137,346 @@ void MainWindow::setupTagsTree()
         QStringList words = name.split(".");
         tagRootItem->insert(words);
     }
+}
 
+void MainWindow::setupTagsTreeModel()
+{
     tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
     ui->treeViewTags->setModel(tagTreeModel.get());
+}
+
+void MainWindow::setupTagsTree()
+{
+    setupTagsTreeRoot();
+    setupTagsTreeChildren();
+    setupTagsTreeModel();
+}
+
+void MainWindow::createAliasesModel()
+{
+    aliasesModel = make_unique<QSqlTableModel>();
+    aliasesModel->setTable("aliases");
+    aliasesModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+}
+
+void MainWindow::setupAliases()
+{
+    createAliasesModel();
+    ui->tableViewAliases->setModel(aliasesModel.get());
+    ui->tableViewAliases->hideColumn(0);
+    ui->tableViewAliases->hideColumn(2);
+    ui->tableViewAliases->hideColumn(3);
+    connect(ui->tableViewAliases->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &MainWindow::toggleRemoveAliasButtonEnabled);
+}
+
+void MainWindow::createTagsModel()
+{
+    tagsModel = make_unique<QSqlRelationalTableModel>();
+    tagsModel->setTable("note_tags");
+    tagsModel->setRelation(2, QSqlRelation("tags", "id", "name"));
+    tagsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+}
+
+void MainWindow::setupTags()
+{
+    createTagsModel();
+    ui->tableViewNoteTags->setModel(tagsModel.get());
+    ui->tableViewNoteTags->hideColumn(0);
+    ui->tableViewNoteTags->hideColumn(1);
+    ui->tableViewNoteTags->hideColumn(3);
+    connect(ui->tableViewNoteTags->selectionModel(),&QItemSelectionModel::selectionChanged,
+            this, &MainWindow::toggleRemoveTagButtonEnabled);
+}
+
+void MainWindow::createLinksFromModel()
+{
+    linkedFromModel = make_unique<QSqlRelationalTableModel>();
+    linkedFromModel->setTable("links");
+    linkedFromModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    linkedFromModel->setRelation(1, QSqlRelation("notes", "id", "title"));
+}
+
+void MainWindow::setupLinksFrom()
+{
+    createLinksFromModel();
+    ui->tableViewLinkedFrom->setModel(linkedFromModel.get());
+    ui->tableViewLinkedFrom->hideColumn(0);
+    ui->tableViewLinkedFrom->hideColumn(2);
+    ui->tableViewLinkedFrom->hideColumn(3);
+}
+
+void MainWindow::createLinksToModel()
+{
+    linksToModel = make_unique<QSqlRelationalTableModel>();
+    linksToModel->setTable("links");
+    linksToModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    linksToModel->setRelation(2, QSqlRelation("notes", "id", "title"));
+}
+
+void MainWindow::setupLinksTo()
+{
+    createLinksToModel();
+    ui->tableViewLinksTo->setModel(linksToModel.get());
+    ui->tableViewLinksTo->hideColumn(0);
+    ui->tableViewLinksTo->hideColumn(1);
+    ui->tableViewLinksTo->hideColumn(3);
+}
+
+void MainWindow::setupNoteModels()
+{
+    setupAliases();
+    setupTags();
+    setupLinksFrom();
+    setupLinksTo();
+}
+
+void MainWindow::setupSearchModel()
+{
+    searchModel = make_unique<QSqlQueryModel>();
+    ui->tableViewSearch->setModel(searchModel.get());
+}
+
+//~~~~~~~~~~~~~~~~~~~~
+
+//Helper
+
+void MainWindow::showCriticalErrorAndQuit(const QString& error)
+{
+    QMessageBox::critical(this, "QtSemanticNotes", error);
+    qApp->quit();
+}
+
+bool MainWindow::askBool(const QString& question)
+{
+    QMessageBox msgBox;
+    msgBox.setText(question);
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    int answer = msgBox.exec();
+    return answer == QMessageBox::Yes;
+}
+
+optional<QString> MainWindow::askString(const QString& title,
+                                        const QString& label,
+                                        const QString& defaultText)
+{
+    bool ok;
+    QString answer = QInputDialog::getText(this, title, label,
+                                           QLineEdit::Normal, defaultText, &ok);
+    if (ok && !answer.isEmpty()) {
+        return answer;
+    } else {
+        return {};
+    }
+}
+
+Note* MainWindow::noteFromIndex(const QModelIndex& index)
+{
+    return noteTreeModel->itemFromIndex(index)->getValue();
+}
+
+QString MainWindow::tagFromIndex(const QModelIndex& index)
+{
+    QStringList words;
+    return tagTreeModel->itemFromIndex(index)->getFullTag(words);
+}
+
+//~~~~~~~~~~~~~~~~~~~~
+
+//Notes
+
+void MainWindow::enableNoteActions()
+{
+    ui->actionOpen->setEnabled(true);
+    ui->actionOpenInNewTab->setEnabled(true);
+    ui->actionRename->setEnabled(true);
+    ui->actionSave->setEnabled(true);
+    ui->actionDelete->setEnabled(true);
+}
+
+void MainWindow::enableNodeEditWidgets()
+{
+    ui->textBrowserNoteContent->setEnabled(true);
+    ui->tableViewAliases->setEnabled(true);
+    ui->tableViewNoteTags->setEnabled(true);
+    ui->tableViewLinkedFrom->setEnabled(true);
+    ui->tableViewLinksTo->setEnabled(true);
+    ui->toolButtonAddAlias->setEnabled(true);
+    ui->toolButtonAddTag->setEnabled(true);
+    ui->actionViewMode->setEnabled(true);
+}
+
+void MainWindow::selectFromModels()
+{
+    aliasesModel->select();
+    tagsModel->select();
+    linkedFromModel->select();
+    linksToModel->select();
+}
+
+void MainWindow::filterModelsForNote(const Id& id)
+{
+    QString idFilter = QString("note_id = %1").arg(id);
+    aliasesModel->setFilter(idFilter);
+    tagsModel->setFilter(idFilter);
+    linkedFromModel->setFilter(idFilter);
+    linksToModel->setFilter(idFilter);
+    selectFromModels();
+}
+
+void MainWindow::setWidgetTitles(const QString& title)
+{
+    QString windowTitle = QString("%1[*] — QtSemanticNotes").arg(title);
+    setWindowTitle(windowTitle);
+    ui->tabWidgetNotes->setTabText(0, title);
+}
+
+void MainWindow::openNote(Note* note)
+{
+    currentNote = note;
+    content.setPlainText(note->getContent());
+    chooseModeToEnable(note);
+    setWidgetTitles(note->getTitle());
+    enableNodeEditWidgets();
+    filterModelsForNote(note->getId());
+}
+
+Note* MainWindow::createNote(const QString& title, const Id& parentId)
+{
+    auto note = Note::create(title, "", parentId);
+    Note* noteptr = note.get();
+    notes.push_back(std::move(note));
+    return noteptr;
+}
+
+optional<Note*> MainWindow::createNoteIfNotExists(const QString& title, const Id& parentId)
+{
+    if(Note::existWithTitle(title)) {
+        QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
+        return {};
+    } else {
+        return createNote(title, parentId);
+    }
+}
+
+void MainWindow::addSubnote(const QModelIndex& parentIndex)
+{
+    auto title = askString("Add Subnote", "Title:");
+    if(title.has_value()) {
+        Id parentId = noteFromIndex(parentIndex)->getId();
+        auto note = createNoteIfNotExists(title.value(), parentId);
+        if(note.has_value()) {
+            noteTreeModel->addSubnoteAtIndex(note.value(), parentIndex);
+        }
+    }
+}
+
+void MainWindow::addNote()
+{
+    QModelIndex rootIndex = noteTreeModel->getRootIndex();
+    addSubnote(rootIndex);
+}
+
+void MainWindow::updateNoteContent()
+{
+    QString text = content.toRawText();
+    currentNote->setContent(text);
+    currentNote->update();
+}
+
+void MainWindow::showNoteIsModified()
+{
+    setWindowModified(true);
+    ui->actionSave->setEnabled(true);
+}
+
+void MainWindow::showNoteIsNotModified()
+{
+    setWindowModified(false);
+    ui->actionSave->setEnabled(false);
+}
+
+void MainWindow::saveNote()
+{
+    updateNoteContent();
+    showNoteIsNotModified();
+}
+
+void MainWindow::renameNoteIfNotExists(const QString& title, const QModelIndex& index)
+{
+    if(Note::existWithTitle(title)) {
+        QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
+    } else {
+        noteTreeModel->renameNoteAtIndex(title, index);
+    }
+}
+
+void MainWindow::renameNote(const QModelIndex& index)
+{
+    QString oldTitle = noteFromIndex(index)->getTitle();
+    auto title = askString("Rename note", "Title:", oldTitle);
+    if(title.has_value()) {
+        renameNoteIfNotExists(title.value(), index);
+    }
+}
+
+void MainWindow::deleteNote(const QModelIndex& index)
+{
+    if(askBool("Remove note and it's subnotes?"))
+        noteTreeModel->deleteNoteAtIndex(index);
+}
+
+void MainWindow::findNotes()
+{
+    //auto words = askString("Search in title, content and aliases", "Words:");
+}
+
+//~~~~~~~~~~~~~~~~~~
+
+//Tag
+
+void MainWindow::deleteTag(const QModelIndex& index)
+{
+    if(askBool("Remove tag and it's subtags?")) {
+        QString fulltag = tagFromIndex(index);
+        Tag::deleteTagAndSubtags(fulltag);
+        tagTreeModel->deleteTagAtIndex(index);
+    }
+}
+
+void MainWindow::findNotesByTag(const QModelIndex& index)
+{
+    QString fulltag = tagFromIndex(index);
+    QSqlQuery query = Search::findNotesByTag(fulltag);
+    searchModel->setQuery(query);
+    searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
+    ui->tableViewSearch->setColumnHidden(0, true);
+}
+
+//~~~~~~~~~~~~~~~~~~
+
+//NoteTags
+
+void MainWindow::addNoteTag()
+{
+    auto name = askString(tr("Add Tag"), tr("Tag name:"));
+    if (name.has_value()) {
+        auto tag = Tag::getOrCreate(name.value());
+        Tag::addNoteTags(currentNote, tag.get());
+        tagsModel->select();
+    }
+}
+
+void MainWindow::deleteNoteTag()
+{
+    QModelIndexList indexes = ui->tableViewNoteTags->selectionModel()->selectedIndexes();
+    for(QModelIndex& index : indexes) {
+        Id id = index.data(0).toUInt();
+        Tag::deleteTagIfNotUsed(id);
+        tagsModel->removeRows(index.row(), 1);
+    }
+    tagsModel->select();
 }
 
 void MainWindow::toggleRemoveTagButtonEnabled()
@@ -120,6 +488,37 @@ void MainWindow::toggleRemoveTagButtonEnabled()
     }
 }
 
+//~~~~~~~~~~~~~~~~~~
+
+//NoteAlias
+
+void MainWindow::addAliasIfNotExists(const QString& alias)
+{
+    if(Note::existWithTitle(alias)) {
+        QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
+    } else {
+        Note::addNoteAlias(currentNote, alias);
+    }
+}
+
+void MainWindow::addNoteAlias()
+{
+    auto name = askString(tr("Add Alias"), tr("Alias name:"));
+    if (name.has_value()) {
+        addAliasIfNotExists(name.value());
+    }
+    aliasesModel->select();
+}
+
+void MainWindow::deleteNoteAlias()
+{
+    QModelIndexList indexes = ui->tableViewAliases->selectionModel()->selectedIndexes();
+    for(QModelIndex& index : indexes) {
+        aliasesModel->removeRows(index.row(), 1);
+    }
+    aliasesModel->select();
+}
+
 void MainWindow::toggleRemoveAliasButtonEnabled()
 {
     if(ui->tableViewAliases->selectionModel()->selectedIndexes().size() > 0) {
@@ -129,112 +528,9 @@ void MainWindow::toggleRemoveAliasButtonEnabled()
     }
 }
 
-void MainWindow::setupNoteModels()
-{
-    aliasesModel = make_unique<QSqlTableModel>();
-    aliasesModel->setTable("aliases");
-    aliasesModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    ui->tableViewAliases->setModel(aliasesModel.get());
-    ui->tableViewAliases->hideColumn(0);
-    ui->tableViewAliases->hideColumn(2);
-    ui->tableViewAliases->hideColumn(3);
+//~~~~~~~~~~~~~~~~~~
 
-    connect(ui->tableViewAliases->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &MainWindow::toggleRemoveAliasButtonEnabled);
-
-    tagsModel = make_unique<QSqlRelationalTableModel>();
-    tagsModel->setTable("note_tags");
-    tagsModel->setRelation(2, QSqlRelation("tags", "id", "name"));
-    tagsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    ui->tableViewNoteTags->setModel(tagsModel.get());
-    ui->tableViewNoteTags->hideColumn(0);
-    ui->tableViewNoteTags->hideColumn(1);
-    ui->tableViewNoteTags->hideColumn(3);
-
-    connect(ui->tableViewNoteTags->selectionModel(),&QItemSelectionModel::selectionChanged,
-            this, &MainWindow::toggleRemoveTagButtonEnabled);
-
-    linkedFromModel = make_unique<QSqlRelationalTableModel>();
-    linkedFromModel->setTable("links");
-    linkedFromModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    linkedFromModel->setRelation(1, QSqlRelation("notes", "id", "title"));
-    ui->tableViewLinkedFrom->setModel(linkedFromModel.get());
-    ui->tableViewLinkedFrom->hideColumn(0);
-    ui->tableViewLinkedFrom->hideColumn(2);
-    ui->tableViewLinkedFrom->hideColumn(3);
-
-    linksToModel = make_unique<QSqlRelationalTableModel>();
-    linksToModel->setTable("links");
-    linksToModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    linksToModel->setRelation(2, QSqlRelation("notes", "id", "title"));
-    ui->tableViewLinksTo->setModel(linksToModel.get());
-    ui->tableViewLinksTo->hideColumn(0);
-    ui->tableViewLinksTo->hideColumn(1);
-    ui->tableViewLinksTo->hideColumn(3);
-}
-
-void MainWindow::setupSearchModel()
-{
-    searchModel = make_unique<QSqlQueryModel>();
-    ui->tableViewSearch->setModel(searchModel.get());
-}
-
-void MainWindow::on_actionSave_triggered()
-{
-    currentNote->setContent(content.toRawText());
-    currentNote->update();
-    setWindowModified(false);
-    ui->actionSave->setEnabled(false);
-}
-
-void MainWindow::enableViewMode()
-{
-    ui->textBrowserNoteContent->setDocument(nullptr);
-    ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
-    ui->textBrowserNoteContent->setReadOnly(true);
-}
-
-void MainWindow::chooseModeToEnable(Note* note)
-{
-    if (note->getContent().size() == 0) {
-        enableEditMode();
-    } else {
-        enableViewMode();
-    }
-}
-
-void MainWindow::openNote(Note* note)
-{
-    currentNote = note;
-
-    content.setPlainText(note->getContent());
-
-    chooseModeToEnable(note);
-
-    QString title = QString("%1[*] — QtSemanticNotes").arg(note->getTitle());
-    setWindowTitle(title);
-
-    ui->tabWidgetNotes->setTabText(0, note->getTitle());
-
-    ui->textBrowserNoteContent->setEnabled(true);
-    ui->tableViewAliases->setEnabled(true);
-    ui->tableViewNoteTags->setEnabled(true);
-    ui->tableViewLinkedFrom->setEnabled(true);
-    ui->tableViewLinksTo->setEnabled(true);
-    ui->toolButtonAddAlias->setEnabled(true);
-    ui->toolButtonAddTag->setEnabled(true);
-    ui->actionViewMode->setEnabled(true);
-
-    QString idFilter = QString("note_id = %1").arg(note->getId());
-    aliasesModel->setFilter(idFilter);
-    aliasesModel->select();
-    tagsModel->setFilter(idFilter);
-    tagsModel->select();
-    linkedFromModel->setFilter(idFilter);
-    linkedFromModel->select();
-    linksToModel->setFilter(idFilter);
-    linksToModel->select();
-}
+//Links
 
 void MainWindow::loadPossibleLinks()
 {
@@ -250,8 +546,9 @@ QString MainWindow::makeLinks(QString rightPart)
     QRegularExpressionMatch match = titlesRegex.match(rightPart);
     while(match.hasMatch()) {
         QString link = QString("<a href='qtsemanticnotes://1'>%1</a>").arg(match.captured(0));
-        leftPart = rightPart.left(match.capturedStart() + match.capturedLength());
-        rightPart = rightPart.mid(match.capturedStart() + match.capturedLength());
+        int position = match.capturedStart() + match.capturedLength();
+        leftPart = rightPart.left(position);
+        rightPart = rightPart.mid(position);
         leftPart.replace(match.capturedStart(), match.capturedLength(), link);
         parts.append(leftPart);
         match = titlesRegex.match(rightPart);
@@ -260,239 +557,63 @@ QString MainWindow::makeLinks(QString rightPart)
     return parts.join("");
 }
 
-void MainWindow::on_toolButtonAddAlias_clicked()
+QList<Id> MainWindow::findLinks(QString text)
 {
-    bool ok;
-    QString alias = QInputDialog::getText(this, tr("Add Alias"),
-                                          tr("Alias name:"), QLineEdit::Normal,
-                                          "", &ok);
-    if (ok && !alias.isEmpty()) {
-        QDateTime now = QDateTime::currentDateTime();
-        QString now_s = now.toString(Qt::ISODateWithMs);
-
-        QSqlRecord record = aliasesModel->record();
-        record.setGenerated("id", false);
-        record.setValue("alias", alias);
-        record.setValue("note_id", currentNote->getId());
-        record.setValue("created_at", now_s);
-        aliasesModel->insertRecord(-1, record);
-    }
+//    QList<Id> linkedNotes;
+//    QRegularExpression titlesRegex("(" + possibleLinks + ")", QRegularExpression::CaseInsensitiveOption);
+//    QRegularExpressionMatchIterator i = titlesRegex.globalMatch(text);
+//    while(i.hasNext()) {
+//        QRegularExpressionMatch match = i.next();
+//        QString word = match.captured(0);
+//    }
+//    parts.append(rightPart);
+//    return parts.join("");
 }
 
-void MainWindow::on_toolButtonRemoveAlias_clicked()
+void MainWindow::updateBackLinks()
 {
-    QModelIndexList indexes = ui->tableViewAliases->selectionModel()->selectedIndexes();
-    for(QModelIndex& index : indexes) {
-        aliasesModel->removeRows(index.row(), 1);
-    }
-    aliasesModel->select();
+//    QSqlQuery q = Search::findNotes(currentNote->getTitle());
+//    while(q.next()) {}
 }
 
-void MainWindow::on_toolButtonAddTag_clicked()
+//~~~~~~~~~~~~~~~~~~
+
+//Editor
+
+void MainWindow::enableViewMode()
 {
-    bool ok;
-    QString name = QInputDialog::getText(this, tr("Add Tag"),
-                                         tr("Tag name:"), QLineEdit::Normal,
-                                         "", &ok);
-    if (ok && !name.isEmpty()) {
-        auto tag = Tag::getOrCreate(name);
-        Tag::addNoteTags(currentNote, tag.get());
-        tagsModel->select();
-    }
-}
-
-void MainWindow::on_toolButtonRemoveTag_clicked()
-{
-    QModelIndexList indexes = ui->tableViewNoteTags->selectionModel()->selectedIndexes();
-    for(QModelIndex& index : indexes) {
-        tagsModel->removeRows(index.row(), 1);
-    }
-    tagsModel->select();
-}
-
-void MainWindow::addSubnote()
-{
-    bool ok;
-    QString title = QInputDialog::getText(this, tr("Add Subnote"),
-                                          tr("Title:"), QLineEdit::Normal,
-                                          "", &ok);
-    if (ok && !title.isEmpty()) {
-        auto note = Note::create(title, "", selectedItem->getValue()->getId());
-        Note* noteptr = note.get();
-        notes.push_back(std::move(note));
-        noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
-    }
-}
-
-void MainWindow::renameNote()
-{
-    bool ok;
-    QString title = QInputDialog::getText(this, tr("Rename note"),
-                                          tr("New Title:"), QLineEdit::Normal,
-                                          selectedItem->getValue()->getTitle(), &ok);
-    if (ok && !title.isEmpty()) {
-        noteTreeModel->renameNoteAtIndex(title, selectedIndex);
-    }
-}
-
-void MainWindow::deleteNote()
-{
-    QMessageBox msgBox;
-    msgBox.setText("Remove note and it's subnotes?");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    msgBox.setDefaultButton(QMessageBox::Yes);
-    int answer = msgBox.exec();
-    if (answer == QMessageBox::Yes) {
-        noteTreeModel->deleteNoteAtIndex(selectedIndex);
-    }
-}
-
-void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point)
-{
-    QModelIndex selectedIndex = ui->treeViewNotes->indexAt(point);
-
-    auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
-
-    if (!selectedIndex.isValid()) {
-        QMenu notesContextMenu;
-        notesContextMenu.addAction("Add Subnote", addNote);
-        return;
-    }
-
-    NoteItem* selectedItem = noteTreeModel->itemFromIndex(selectedIndex);
-
-    auto onOpenAction = [this, selectedItem](){
-        Note* note = selectedItem->getValue();
-        openNote(note);
-    };
-
-    auto onAddSubnote = [this, selectedItem, selectedIndex](){
-        bool ok;
-        QString title = QInputDialog::getText(this, tr("Add Subnote"),
-                                              tr("Title:"), QLineEdit::Normal,
-                                              "", &ok);
-        if (ok && !title.isEmpty()) {
-            auto note = Note::create(title, "", selectedItem->getValue()->getId());
-            Note* noteptr = note.get();
-            notes.push_back(std::move(note));
-            noteTreeModel->addSubnoteAtIndex(noteptr, selectedIndex);
-        }
-    };
-
-    auto onRenameNote = [this, selectedItem, selectedIndex](){
-        bool ok;
-        QString title = QInputDialog::getText(this, tr("Rename note"),
-                                              tr("New Title:"), QLineEdit::Normal,
-                                              selectedItem->getValue()->getTitle(), &ok);
-        if (ok && !title.isEmpty()) {
-            noteTreeModel->renameNoteAtIndex(title, selectedIndex);
-        }
-    };
-
-    auto onDeleteAction = [this, selectedIndex](){
-        QMessageBox msgBox;
-        msgBox.setText("Remove note and it's subnotes?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-        int answer = msgBox.exec();
-        if (answer == QMessageBox::Yes) {
-            noteTreeModel->deleteNoteAtIndex(selectedIndex);
-        }
-    };
-
-    QMenu notesContextMenu;
-    notesContextMenu.addAction("Open", onOpenAction);
-    notesContextMenu.addAction("Open in New Tab", onOpenAction);
-    notesContextMenu.addAction("Add Subnote", onAddSubnote);
-    notesContextMenu.addAction("Rename", onRenameNote);
-    notesContextMenu.addSeparator();
-    notesContextMenu.addAction("Delete", onDeleteAction);
-    notesContextMenu.exec(globalPoint);
-}
-
-void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
-{
-    auto item = noteTreeModel->itemFromIndex(index);
-    auto note = item->getValue();
-    openNote(note);
-
-    ui->actionOpen->setEnabled(true);
-    ui->actionOpenInNewTab->setEnabled(true);
-    ui->actionRename->setEnabled(true);
-    ui->actionSave->setEnabled(true);
-    ui->actionDelete->setEnabled(true);
-
-//    disconnect(ui->actionOpen, SIGNAL(triggered(bool)));
-//    connect(ui->actionOpen, &QAction::triggered, onOpenAction);
-//    disconnect(ui->actionOpenInNewTab, SIGNAL(triggered(bool)));
-//    connect(ui->actionOpenInNewTab, &QAction::triggered, onOpenAction);
-    disconnect(ui->actionAdd, SIGNAL(triggered(bool)));
-    connect(ui->actionAdd, &QAction::triggered, this, &MainWindow::addSubnote);
-    disconnect(ui->actionSave, SIGNAL(triggered(bool)));
-    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveNote);
-    disconnect(ui->actionDelete, SIGNAL(triggered(bool)));
-    connect(ui->actionDelete, &QAction::triggered, this, &MainWindow::deleteNode);
-}
-
-void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
-{
-    QModelIndex selectedIndex = ui->treeViewTags->indexAt(point);
-
-    if (!selectedIndex.isValid())
-        return;
-
-    TagItem* selectedItem = tagTreeModel->itemFromIndex(selectedIndex);
-
-    auto onFindAction = [this, selectedItem](){};
-
-    auto onDeleteAction = [this, selectedItem, selectedIndex](){
-        QMessageBox msgBox;
-        msgBox.setText("Remove tag and it's subtags?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::Yes);
-        int answer = msgBox.exec();
-        if (answer == QMessageBox::Yes) {
-            QStringList words;
-            QString fulltag = selectedItem->getFullTag(words);
-            Tag::deleteTagAndSubtags(fulltag);
-            tagTreeModel->deleteTagAtIndex(selectedIndex);
-        }
-    };
-
-    QMenu tagsContextMenu;
-    tagsContextMenu.addAction("Find By Tag", onFindAction);
-    tagsContextMenu.addSeparator();
-    tagsContextMenu.addAction("Delete", onDeleteAction);
-
-    auto globalPoint = ui->treeViewTags->viewport()->mapToGlobal(point);
-
-    tagsContextMenu.exec(globalPoint);
-}
-
-void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
-{
-    TagItem* selectedItem = tagTreeModel->itemFromIndex(index);
-    QStringList words;
-    QString fulltag = selectedItem->getFullTag(words);
-    searchModel->setQuery(Search::findNotesByTag(fulltag));
-    searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
-    ui->tableViewSearch->setColumnHidden(0, true);
-}
-
-void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
-{
-    QSqlRecord note = searchModel->record(index.row());
-    uint id = note.value("id").toUInt();
-    if (idToItem.contains(id)) {
-        NoteItem* item = idToItem.value(id);
-        openNote(item->getValue());
-    }
+    ui->textBrowserNoteContent->setDocument(nullptr);
+    ui->textBrowserNoteContent->setHtml(makeLinks(content.toRawText()));
+    ui->textBrowserNoteContent->setReadOnly(true);
 }
 
 void MainWindow::enableEditMode()
 {
     ui->textBrowserNoteContent->setDocument(&content);
     ui->textBrowserNoteContent->setReadOnly(false);
+}
+
+void MainWindow::chooseModeToEnable(Note* note)
+{
+    if (note->getContent().size() == 0) {
+        enableEditMode();
+    } else {
+        enableViewMode();
+    }
+}
+
+void MainWindow::onContentModified()
+{
+    showNoteIsModified();
+}
+
+//~~~~~~~~~~~~~~~~~~
+
+//Actions
+
+void MainWindow::on_actionSave_triggered()
+{
+    saveNote();
 }
 
 void MainWindow::on_actionViewMode_triggered()
@@ -508,14 +629,106 @@ void MainWindow::on_actionViewMode_triggered()
 #define TOSTRING(x) STRINGIFY(x)
 void MainWindow::on_actionAboutQtSemanticNotes_triggered()
 {
-    QMessageBox msgBox;
 #ifdef VERSION
-    msgBox.setText(QString("Version: %1").arg(TOSTRING(VERSION)));
+    QMessageBox::about(this, "QtSemanticNotes", QString("Version: %1").arg(TOSTRING(VERSION)));
 #endif
-    msgBox.exec();
 }
 
 void MainWindow::on_actionAboutQt_triggered()
 {
     qApp->aboutQt();
+}
+
+void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point)
+{
+    QModelIndex selectedIndex = ui->treeViewNotes->indexAt(point);
+    auto globalPoint = ui->treeViewNotes->viewport()->mapToGlobal(point);
+
+    QMenu notesContextMenu;
+    if (!selectedIndex.isValid()) {
+        notesContextMenu.addAction("Add Note", [this](){ addNote(); });
+    } else {
+        notesContextMenu.addAction("Open", [this, selectedIndex](){
+            openNote(noteFromIndex(selectedIndex));
+        });
+        notesContextMenu.addAction("Add Subnote", [this, selectedIndex](){
+            addSubnote(selectedIndex);
+        });
+        notesContextMenu.addAction("Rename", [this, selectedIndex](){
+            renameNote(selectedIndex);
+        });
+        notesContextMenu.addSeparator();
+        notesContextMenu.addAction("Delete", [this, selectedIndex](){
+            deleteNote(selectedIndex);
+        });
+    }
+    notesContextMenu.exec(globalPoint);
+}
+
+void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
+{
+    openNote(noteFromIndex(index));
+    enableNoteActions();
+}
+
+void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
+{
+    QModelIndex selectedIndex = ui->treeViewTags->indexAt(point);
+    if (selectedIndex.isValid()) {
+        QMenu tagsContextMenu;
+        tagsContextMenu.addAction("Find By Tag", [this, selectedIndex](){
+            findNotesByTag(selectedIndex);
+        });
+        tagsContextMenu.addSeparator();
+        tagsContextMenu.addAction("Delete", [this, selectedIndex](){
+            deleteTag(selectedIndex);
+        });
+        auto globalPoint = ui->treeViewTags->viewport()->mapToGlobal(point);
+        tagsContextMenu.exec(globalPoint);
+    }
+}
+
+void MainWindow::on_treeViewTags_doubleClicked(const QModelIndex& index)
+{
+    findNotesByTag(index);
+}
+
+//~~~~~~~~~~~~~~~~~~~~~
+
+//Aliases buttons
+
+void MainWindow::on_toolButtonAddAlias_clicked()
+{
+    addNoteAlias();
+}
+
+void MainWindow::on_toolButtonRemoveAlias_clicked()
+{
+    deleteNoteAlias();
+}
+
+//~~~~~~~~~~~~~~~~~~
+
+//NoteTags buttons
+
+void MainWindow::on_toolButtonAddTag_clicked()
+{
+    addNoteTag();
+}
+
+void MainWindow::on_toolButtonRemoveTag_clicked()
+{
+    deleteNoteTag();
+}
+
+//~~~~~~~~~~~~~~~~~
+
+void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
+{
+    QSqlRecord note = searchModel->record(index.row());
+    uint id = note.value("id").toUInt();
+    if (idToItem.contains(id)) {
+        NoteItem* item = idToItem.value(id);
+        openNote(item->getValue());
+    }
 }

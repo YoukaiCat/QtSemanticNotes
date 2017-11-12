@@ -743,8 +743,6 @@
     <property name="separatorsCollapsible">
      <bool>false</bool>
     </property>
-    <addaction name="actionOpen"/>
-    <addaction name="actionOpenInNewTab"/>
     <addaction name="actionAdd"/>
     <addaction name="actionRename"/>
     <addaction name="actionSave"/>

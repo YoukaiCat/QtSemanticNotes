@@ -74,6 +74,16 @@ optional<unique_ptr<Note>> Note::getById(const Id& id)
     }
 }
 
+bool Note::existWithTitle(const QString& title)
+{
+    QSqlQuery q;
+    q.prepare("SELECT count(*) FROM notes"
+              "WHERE title = :title");
+    q.bindValue(":title", title);
+    Database::safeExecPreparedQuery(q);
+    return q.next();
+}
+
 Id Note::getId() const
 {
     return id;
@@ -220,4 +230,18 @@ QStringList Note::getPossibleLinks()
     while(q.next())
         possibleLinksList.append(q.value(1).toString());
     return possibleLinksList;
+}
+
+void Note::addNoteAlias(const Note* note, const QString& alias)
+{
+    QDateTime now = QDateTime::currentDateTime();
+    QString now_s = now.toString(Qt::ISODateWithMs);
+
+    QSqlQuery insertNoteAlias;
+    insertNoteAlias.prepare("INSERT INTO aliases (alias, note_id, created_at) "
+                             "VALUES (:alias, :note_id, :created_at)");
+    insertNoteAlias.bindValue(":alias", alias);
+    insertNoteAlias.bindValue(":note_id", note->getId());
+    insertNoteAlias.bindValue(":created_at", now_s);
+    Database::safeExecPreparedQuery(insertNoteAlias);
 }

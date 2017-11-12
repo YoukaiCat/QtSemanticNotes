@@ -157,3 +157,20 @@ void Tag::deleteTagAndSubtags(const QString& fulltag)
     q.bindValue(":like_name", fulltag + '.');
     Database::safeExecPreparedQuery(q);
 }
+
+void Tag::deleteTagIfNotUsed(const Id& id)
+{
+    QSqlQuery countChildren;
+    countChildren.prepare("SELECT count(*) FROM note_tags "
+                          "WHERE tag_id = :tag_id");
+    countChildren.bindValue(":tag_id", id);
+    Database::safeExecPreparedQuery(countChildren);
+
+    if(countChildren.value(0).toUInt() == 0) {
+        QSqlQuery q;
+        q.prepare("DELETE FROM tags "
+                  "WHERE id = :id");
+        q.bindValue(":id", id);
+        Database::safeExecPreparedQuery(q);
+    }
+}
