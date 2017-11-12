@@ -300,7 +300,7 @@ void MainWindow::enableNoteActions()
     ui->actionOpenInNewTab->setEnabled(true);
     ui->actionRename->setEnabled(true);
     ui->actionSave->setEnabled(true);
-    ui->actionDelete->setEnabled(true);
+    ui->actionDeleteNote->setEnabled(true);
 }
 
 void MainWindow::enableNodeEditWidgets()

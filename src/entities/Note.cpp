@@ -205,6 +205,7 @@ void Note::update()
         updateNotesQuery.bindValue(":updated_at", now_s);
         updateNotesQuery.bindValue(":parent_id", parentId);
     }
+    Database::safeExecPreparedQuery(updateNotesQuery);
 
     updatedAt = now;
 }

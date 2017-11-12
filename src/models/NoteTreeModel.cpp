@@ -210,7 +210,9 @@ void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& i
         return;
 
     NoteItem* item = itemFromIndex(index);
-    item->getValue()->setTitle(title);
+    Note* note = item->getValue();
+    note->setTitle(title);
+    note->update();
 
     emit dataChanged(index, index, QVector<int>());
 }
