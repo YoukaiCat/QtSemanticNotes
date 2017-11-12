@@ -36,6 +36,7 @@ public slots:
     void createItemsForNotes();
     void setItemChilds();
     void setupNotesTreeChildren();
+    void fixRoot();
     void setupNotesTreeModel();
     void setupNotesTree();
     //Tags tree
@@ -115,7 +116,17 @@ public slots:
     //Slots for UI signals
 
     //Actions
+    void on_actionAdd_triggered();
+    void on_actionRename_triggered();
     void on_actionSave_triggered();
+    void on_actionDeleteNote_triggered();
+    void on_actionFindNote_triggered();
+
+    void on_actionFindByTag_triggered();
+
+    void on_actionPrevious_triggered();
+    void on_actionNext_triggered();
+
     void on_actionViewMode_triggered();
 
     void on_actionAboutQtSemanticNotes_triggered();
@@ -145,6 +156,7 @@ private:
     QHash<Id, NoteItem*> idToItem;
 
     NoteItem* noteRootItem;
+    NoteItem* noteRealRootItem;
     TagItem* tagRootItem;
 
     unique_ptr<NoteTreeModel> noteTreeModel;

@@ -83,7 +83,8 @@ void MainWindow::setupNotesTreeRoot()
 {
     rootNote = RootNote::getRootNote();
     noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
-    idToItem.insert(rootNote->getId(), noteRootItem);
+    noteRealRootItem = new NoteItem(rootNote.get(), noteRootItem);
+    idToItem.insert(rootNote->getId(), noteRealRootItem);
 }
 
 void MainWindow::createItemsForNotes()
@@ -110,10 +111,17 @@ void MainWindow::setupNotesTreeChildren()
     setItemChilds();
 }
 
+void MainWindow::fixRoot()
+{
+    QModelIndex rootIndex = noteTreeModel->index(0, 0, QModelIndex());
+    ui->treeViewNotes->setRootIndex(rootIndex);
+}
+
 void MainWindow::setupNotesTreeModel()
 {
     noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
+    fixRoot();
 }
 
 void MainWindow::setupNotesTree()
@@ -352,7 +360,7 @@ Note* MainWindow::createNote(const QString& title, const Id& parentId)
 
 optional<Note*> MainWindow::createNoteIfNotExists(const QString& title, const Id& parentId)
 {
-    if(Note::existWithTitle(title)) {
+    if(Note::existWithTitleOrAlias(title)) {
         QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
         return {};
     } else {
@@ -374,8 +382,7 @@ void MainWindow::addSubnote(const QModelIndex& parentIndex)
 
 void MainWindow::addNote()
 {
-    QModelIndex rootIndex = noteTreeModel->getRootIndex();
-    addSubnote(rootIndex);
+    addSubnote(ui->treeViewNotes->rootIndex());
 }
 
 void MainWindow::updateNoteContent()
@@ -405,7 +412,7 @@ void MainWindow::saveNote()
 
 void MainWindow::renameNoteIfNotExists(const QString& title, const QModelIndex& index)
 {
-    if(Note::existWithTitle(title)) {
+    if(Note::existWithTitleOrAlias(title)) {
         QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
     } else {
         noteTreeModel->renameNoteAtIndex(title, index);
@@ -494,7 +501,7 @@ void MainWindow::toggleRemoveTagButtonEnabled()
 
 void MainWindow::addAliasIfNotExists(const QString& alias)
 {
-    if(Note::existWithTitle(alias)) {
+    if(Note::existWithTitleOrAlias(alias)) {
         QMessageBox::warning(this, "QtSemanticNotes", tr("Note with that title or alias already exists"));
     } else {
         Note::addNoteAlias(currentNote, alias);
@@ -611,10 +618,51 @@ void MainWindow::onContentModified()
 
 //Actions
 
+void MainWindow::on_actionAdd_triggered()
+{
+    addNote();
+}
+
+//TODO автоматически находить в дереве и выделять открытую заметку
+void MainWindow::on_actionRename_triggered()
+{
+    QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
+    if(indexes.size() > 0) {
+        renameNote(indexes.first());
+    }
+}
+
 void MainWindow::on_actionSave_triggered()
 {
     saveNote();
 }
+
+void MainWindow::on_actionDeleteNote_triggered()
+{
+    QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
+    if(indexes.size() > 0) {
+        deleteNote(indexes.first());
+    }
+}
+
+void MainWindow::on_actionFindNote_triggered()
+{
+    findNotes();
+}
+
+void MainWindow::on_actionFindByTag_triggered()
+{
+    QModelIndexList indexes = ui->treeViewTags->selectionModel()->selectedIndexes();
+    if(indexes.size() > 0) {
+        findNotesByTag(indexes.first());
+    }
+}
+
+void MainWindow::on_actionPrevious_triggered()
+{}
+
+void MainWindow::on_actionNext_triggered()
+{}
 
 void MainWindow::on_actionViewMode_triggered()
 {

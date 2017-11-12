@@ -22,7 +22,7 @@ public:
                                    const Id& parentId);
     static vector<unique_ptr<Note>> getAll();
     static optional<unique_ptr<Note>> getById(const Id& id);
-    static bool existWithTitle(const QString& title);
+    static bool existWithTitleOrAlias(const QString& titleOrAlias);
 
     virtual ~Note() {}
 

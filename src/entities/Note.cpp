@@ -74,12 +74,14 @@ optional<unique_ptr<Note>> Note::getById(const Id& id)
     }
 }
 
-bool Note::existWithTitle(const QString& title)
+bool Note::existWithTitleOrAlias(const QString& titleOrAlias)
 {
     QSqlQuery q;
-    q.prepare("SELECT count(*) FROM notes"
-              "WHERE title = :title");
-    q.bindValue(":title", title);
+    q.prepare("SELECT id FROM notes WHERE title = :title "
+              "UNION "
+              "SELECT id FROM aliases WHERE alias = :alias");
+    q.bindValue(":title", titleOrAlias);
+    q.bindValue(":alias", titleOrAlias);
     Database::safeExecPreparedQuery(q);
     return q.next();
 }

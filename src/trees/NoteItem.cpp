@@ -1,5 +1,8 @@
 #include "NoteItem.h"
 
+NoteItem::NoteItem()
+{}
+
 NoteItem::NoteItem(Note* value, NoteItem* parent)
     : value(value),
       parent(parent)

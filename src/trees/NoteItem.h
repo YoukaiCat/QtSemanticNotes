@@ -8,6 +8,7 @@
 class NoteItem
 {
 public:
+    explicit NoteItem();
     explicit NoteItem(Note* note, NoteItem* parent = nullptr);
     ~NoteItem();
 
