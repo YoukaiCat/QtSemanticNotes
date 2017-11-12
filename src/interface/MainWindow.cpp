@@ -620,7 +620,12 @@ void MainWindow::onContentModified()
 
 void MainWindow::on_actionAdd_triggered()
 {
-    addNote();
+    QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
+    if(indexes.size() > 0) {
+        addSubnote(indexes.first());
+    } else {
+        addNote();
+    }
 }
 
 //TODO автоматически находить в дереве и выделять открытую заметку
