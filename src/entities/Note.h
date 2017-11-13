@@ -50,8 +50,11 @@ public:
     Note(Note&& other) noexcept = delete;
     Note & operator=(Note&& other) noexcept = delete;
 
-    static QStringList getPossibleLinks();
     static void addNoteAlias(const Note* note, const QString& alias);
+
+    static QPair<QHash<QString,Id>,QString> getPossibleLinks();
+    static void addNoteLink(const Id& noteFrom, const Id& noteTo);
+    static void clearLinks(const Id& noteFrom);
 
 protected:
     Id id;

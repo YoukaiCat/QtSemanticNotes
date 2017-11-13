@@ -104,8 +104,8 @@ public slots:
     //Links
     void loadPossibleLinks();
     QString makeLinks(QString text);
-    QList<Id> findLinks(QString text);
-    void updateBackLinks();
+    QList<Id> findLinks(const QString& text);
+    void updateBackLinks(const Note* note);
 
     //Editor
     void enableViewMode();
@@ -149,6 +149,23 @@ public slots:
 
     void on_tableViewSearch_clicked(const QModelIndex& index);
 
+signals:
+    void noteAdded(const Note* note, const QModelIndex& index);
+    void noteRemoved(const Note* note, const QModelIndex& index);
+    void noteOpened(const Note* note, const QModelIndex& index);
+    void noteClosed(const Note* note, const QModelIndex& index);
+    void noteEdited(const Note* note, const QModelIndex& index);
+    void noteSaved(const Note* note, const QModelIndex& index);
+    void noteRenamed(const Note* note, const QModelIndex& index);
+
+    void tagDeleted(const QString& fulltag);
+
+    void noteAliasAdded(const Note* note, const QString& alias);
+    void noteAliasRemoved(const Note* note, const QString& alias);
+
+    void noteTagAdded(const Note* note, const QString& tag);
+    void noteTagRemoved(const Note* note, const QString& tag);
+
 private:
     Ui::MainWindow* ui;
 
@@ -163,7 +180,7 @@ private:
     unique_ptr<NoteTreeModel> noteTreeModel;
     unique_ptr<TagTreeModel> tagTreeModel;
 
-    QString possibleLinks;
+    QPair<QHash<QString,Id>,QString> possibleLinks;
 
     Note* currentNote;
 

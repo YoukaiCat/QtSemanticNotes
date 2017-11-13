@@ -2,11 +2,10 @@
 
 #include "../database/Database.h"
 
-QSqlQuery Search::findNotes(const QString& words)
+QSqlQuery Search::findNotesByContent(const QString& words)
 {
-    //SELECT * FROM fts WHERE fts MATCH ? ORDER BY rank;
     QSqlQuery q;
-    q.prepare("SELECT * FROM notes_fts WHERE notes_fts MATCH 'content : :words'");
+    q.prepare("SELECT rowid, content FROM notes_fts WHERE notes_fts MATCH 'content : :words'");
     q.bindValue(":words", words);
     Database::safeExecPreparedQuery(q);
     return q;

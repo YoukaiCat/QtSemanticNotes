@@ -219,22 +219,6 @@ void Note::remove()
     Database::safeExecPreparedQuery(q);
 }
 
-QStringList Note::getPossibleLinks()
-{
-    QSqlQuery q;
-    q.prepare("SELECT id, title, length(title) FROM notes "
-              "UNION "
-              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
-              "JOIN aliases ON aliases.note_id = notes.id "
-              "ORDER BY 3 DESC");
-    Database::safeExecPreparedQuery(q);
-
-    QStringList possibleLinksList;
-    while(q.next())
-        possibleLinksList.append(q.value(1).toString());
-    return possibleLinksList;
-}
-
 void Note::addNoteAlias(const Note* note, const QString& alias)
 {
     QDateTime now = QDateTime::currentDateTime();
@@ -247,4 +231,48 @@ void Note::addNoteAlias(const Note* note, const QString& alias)
     insertNoteAlias.bindValue(":note_id", note->getId());
     insertNoteAlias.bindValue(":created_at", now_s);
     Database::safeExecPreparedQuery(insertNoteAlias);
+}
+
+QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
+{
+    QSqlQuery q;
+    q.prepare("SELECT id, title, length(title) FROM notes "
+              "UNION "
+              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
+              "JOIN aliases ON aliases.note_id = notes.id "
+              "ORDER BY 3 DESC");
+    Database::safeExecPreparedQuery(q);
+
+    QHash<QString,Id> titleToId;
+    QStringList possibleLinksOrdered;
+    while(q.next()) {
+         Id id = q.value(0).toUInt();
+         QString title = q.value(1).toString();
+         titleToId.insert(title, id);
+         possibleLinksOrdered.append(title);
+    }
+    return qMakePair(titleToId, possibleLinksOrdered.join('|'));
+}
+
+void Note::addNoteLink(const Id& noteFrom, const Id& noteTo)
+{
+    QDateTime now = QDateTime::currentDateTime();
+    QString now_s = now.toString(Qt::ISODateWithMs);
+
+    QSqlQuery insertNoteAlias;
+    insertNoteAlias.prepare("INSERT INTO links (from_note_id, to_note_id, created_at) "
+                             "VALUES (:from_note_id, :to_note_id, :created_at)");
+    insertNoteAlias.bindValue(":from_note_id", noteFrom);
+    insertNoteAlias.bindValue(":to_note_id", noteTo);
+    insertNoteAlias.bindValue(":created_at", now_s);
+    Database::safeExecPreparedQuery(insertNoteAlias);
+}
+
+void Note::clearLinks(const Id& noteFrom)
+{
+    QSqlQuery q;
+    q.prepare("DELETE FROM links "
+              "WHERE from_note_id = :from_note_id");
+    q.bindValue(":from_note_id", noteFrom);
+    Database::safeExecPreparedQuery(q);
 }

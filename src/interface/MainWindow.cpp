@@ -425,12 +425,14 @@ void MainWindow::renameNote(const QModelIndex& index)
     if(title.has_value()) {
         renameNoteIfNotExists(title.value(), index);
     }
+
 }
 
 void MainWindow::deleteNote(const QModelIndex& index)
 {
-    if(askBool("Remove note and it's subnotes?"))
+    if(askBool("Remove note and it's subnotes?")) {
         noteTreeModel->deleteNoteAtIndex(index);
+    }
 }
 
 void MainWindow::findNotes()
@@ -540,7 +542,7 @@ void MainWindow::toggleRemoveAliasButtonEnabled()
 
 void MainWindow::loadPossibleLinks()
 {
-    possibleLinks = Note::getPossibleLinks().join('|');
+    possibleLinks = Note::getPossibleLinks();
 }
 
 //"java virtual machine" (java virtual machine|virtual machine|machine|java)
@@ -548,7 +550,7 @@ QString MainWindow::makeLinks(QString rightPart)
 {
     QStringList parts;
     QString leftPart;
-    QRegularExpression titlesRegex("(" + possibleLinks + ")", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression titlesRegex("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatch match = titlesRegex.match(rightPart);
     while(match.hasMatch()) {
         QString link = QString("<a href='qtsemanticnotes://1'>%1</a>").arg(match.captured(0));
@@ -563,23 +565,33 @@ QString MainWindow::makeLinks(QString rightPart)
     return parts.join("");
 }
 
-QList<Id> MainWindow::findLinks(QString text)
+QList<Id> MainWindow::findLinks(const QString& text)
 {
-//    QList<Id> linkedNotes;
-//    QRegularExpression titlesRegex("(" + possibleLinks + ")", QRegularExpression::CaseInsensitiveOption);
-//    QRegularExpressionMatchIterator i = titlesRegex.globalMatch(text);
-//    while(i.hasNext()) {
-//        QRegularExpressionMatch match = i.next();
-//        QString word = match.captured(0);
-//    }
-//    parts.append(rightPart);
-//    return parts.join("");
+    QList<Id> linkedNotes;
+    QRegularExpression titlesRegex("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatchIterator i = titlesRegex.globalMatch(text);
+    while(i.hasNext()) {
+        QRegularExpressionMatch match = i.next();
+        QString word = match.captured(0);
+        if(possibleLinks.first.contains(word)) {
+            linkedNotes.append(possibleLinks.first.value(word));
+        }
+    }
+    return linkedNotes;
 }
 
-void MainWindow::updateBackLinks()
+void MainWindow::updateBackLinks(const Note* note)
 {
-//    QSqlQuery q = Search::findNotes(currentNote->getTitle());
-//    while(q.next()) {}
+    QSqlQuery q = Search::findNotesByContent(note->getTitle());
+    while(q.next()) {
+        Id id = q.value(0).toUInt();
+        QString content = q.value(1).toString();
+        QList<Id> links = findLinks(content);
+        Note::clearLinks(id);
+        for(auto& id : links) {
+            Note::addNoteLink(id, note->getId());
+        }
+    }
 }
 
 //~~~~~~~~~~~~~~~~~~
