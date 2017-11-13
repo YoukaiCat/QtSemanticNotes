@@ -437,7 +437,13 @@ void MainWindow::deleteNote(const QModelIndex& index)
 
 void MainWindow::findNotes()
 {
-    //auto words = askString("Search in title, content and aliases", "Words:");
+    auto words = askString("Search in title, content and aliases", "Words:");
+    if(words.has_value()) {
+        QSqlQuery query = Search::findNotesByWords(words.value());
+        searchModel->setQuery(query);
+        searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
+        ui->tableViewSearch->setColumnHidden(0, true);
+    }
 }
 
 //~~~~~~~~~~~~~~~~~~

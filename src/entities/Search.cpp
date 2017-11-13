@@ -2,6 +2,18 @@
 
 #include "../database/Database.h"
 
+QSqlQuery Search::findNotesByWords(const QString& words)
+{
+    QSqlQuery q;
+    q.prepare("SELECT rowid, title FROM notes_fts WHERE notes_fts MATCH :words "
+              "UNION "
+              "SELECT rowid, alias FROM aliases_fts WHERE aliases_fts MATCH :alias_words");
+    q.bindValue(":words", words);
+    q.bindValue(":alias_words", words);
+    Database::safeExecPreparedQuery(q);
+    return q;
+}
+
 QSqlQuery Search::findNotesByContent(const QString& words)
 {
     QSqlQuery q;

@@ -9,6 +9,7 @@
 class Search
 {
 public:
+    static QSqlQuery findNotesByWords(const QString& words);
     static QSqlQuery findNotesByContent(const QString& words);
     static QSqlQuery findNotesByTag(const QString& fulltag);
 };
