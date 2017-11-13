@@ -122,6 +122,8 @@ void MainWindow::setupNotesTreeModel()
     noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
     ui->treeViewNotes->setModel(noteTreeModel.get());
     fixRoot();
+    connect(ui->treeViewNotes->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &MainWindow::openSelectedNote);
 }
 
 void MainWindow::setupNotesTree()
@@ -302,6 +304,14 @@ void MainWindow::enableNoteActions()
     ui->actionDeleteNote->setEnabled(true);
 }
 
+void MainWindow::disableNoteActions()
+{
+    ui->actionAddSubnote->setEnabled(false);
+    ui->actionRename->setEnabled(false);
+    ui->actionSave->setEnabled(false);
+    ui->actionDeleteNote->setEnabled(false);
+}
+
 void MainWindow::enableNodeEditWidgets()
 {
     ui->textBrowserNoteContent->setEnabled(true);
@@ -312,6 +322,18 @@ void MainWindow::enableNodeEditWidgets()
     ui->toolButtonAddAlias->setEnabled(true);
     ui->toolButtonAddTag->setEnabled(true);
     ui->actionViewMode->setEnabled(true);
+}
+
+void MainWindow::disableNodeEditWidgets()
+{
+    ui->textBrowserNoteContent->setEnabled(false);
+    ui->tableViewAliases->setEnabled(false);
+    ui->tableViewNoteTags->setEnabled(false);
+    ui->tableViewLinkedFrom->setEnabled(false);
+    ui->tableViewLinksTo->setEnabled(false);
+    ui->toolButtonAddAlias->setEnabled(false);
+    ui->toolButtonAddTag->setEnabled(false);
+    ui->actionViewMode->setEnabled(false);
 }
 
 void MainWindow::selectFromModels()
@@ -339,14 +361,39 @@ void MainWindow::setWidgetTitles(const QString& title)
     ui->tabWidgetNotes->setTabText(0, title);
 }
 
+void MainWindow::selectNoteInTree()
+{
+    auto index = noteTreeModel->findIndexByNoteId(currentNote->getId(), ui->treeViewNotes->rootIndex());
+    Q_ASSERT(index.has_value());
+    ui->treeViewNotes->selectionModel()->setCurrentIndex(index.value(), QItemSelectionModel::SelectCurrent);
+}
+
 void MainWindow::openNote(Note* note)
 {
     currentNote = note;
     content.setPlainText(note->getContent());
     chooseModeToEnable(note);
     setWidgetTitles(note->getTitle());
+    enableNoteActions();
     enableNodeEditWidgets();
     filterModelsForNote(note->getId());
+    selectNoteInTree();
+}
+
+void MainWindow::openSelectedNote()
+{
+    QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
+    if(!indexes.isEmpty()) {
+        Note* note = noteFromIndex(indexes.first());
+        openNote(note);
+    }
+}
+
+void MainWindow::closeNote()
+{
+    disableNoteActions();
+    disableNodeEditWidgets();
+    selectFromModels();
 }
 
 Note* MainWindow::createNote(const QString& title, const Id& parentId)
@@ -430,9 +477,15 @@ void MainWindow::renameNote(const QModelIndex& index)
 
 void MainWindow::deleteNote(const QModelIndex& index)
 {
+    closeNote();
     if(askBool("Remove note and it's subnotes?")) {
         noteTreeModel->deleteNoteAtIndex(index);
     }
+}
+
+void MainWindow::switchTabToSearchResults()
+{
+    ui->tabWidgetNotes->setCurrentIndex(1);
 }
 
 void MainWindow::findNotes()
@@ -443,7 +496,7 @@ void MainWindow::findNotes()
         searchModel->setQuery(query);
         searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
         ui->tableViewSearch->setColumnHidden(0, true);
-        ui->tabWidgetNotes->setCurrentIndex(1);
+        switchTabToSearchResults();
     }
 }
 
@@ -467,7 +520,7 @@ void MainWindow::findNotesByTag(const QModelIndex& index)
     searchModel->setQuery(query);
     searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
     ui->tableViewSearch->setColumnHidden(0, true);
-    ui->tabWidgetNotes->setCurrentIndex(1);
+    switchTabToSearchResults();
 }
 
 //~~~~~~~~~~~~~~~~~~
@@ -488,7 +541,7 @@ void MainWindow::deleteNoteTag()
 {
     QModelIndexList indexes = ui->tableViewNoteTags->selectionModel()->selectedIndexes();
     for(QModelIndex& index : indexes) {
-        Id id = index.data(0).toUInt();
+        Id id = index.data(1).toUInt();
         Tag::deleteTagIfNotUsed(id);
         tagsModel->removeRows(index.row(), 1);
     }
@@ -645,7 +698,7 @@ void MainWindow::on_actionAdd_triggered()
 void MainWindow::on_actionAddSubnote_triggered()
 {
     QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
-    if(indexes.size() > 0) {
+    if(!indexes.isEmpty()) {
         addSubnote(indexes.first());
     }
 }
@@ -654,7 +707,7 @@ void MainWindow::on_actionAddSubnote_triggered()
 void MainWindow::on_actionRename_triggered()
 {
     QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
-    if(indexes.size() > 0) {
+    if(!indexes.isEmpty()) {
         renameNote(indexes.first());
     }
 }
@@ -667,7 +720,7 @@ void MainWindow::on_actionSave_triggered()
 void MainWindow::on_actionDeleteNote_triggered()
 {
     QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
-    if(indexes.size() > 0) {
+    if(!indexes.isEmpty()) {
         deleteNote(indexes.first());
     }
 }
@@ -680,7 +733,7 @@ void MainWindow::on_actionFindNote_triggered()
 void MainWindow::on_actionFindByTag_triggered()
 {
     QModelIndexList indexes = ui->treeViewTags->selectionModel()->selectedIndexes();
-    if(indexes.size() > 0) {
+    if(!indexes.isEmpty()) {
         findNotesByTag(indexes.first());
     }
 }
@@ -740,12 +793,6 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
     notesContextMenu.exec(globalPoint);
 }
 
-void MainWindow::on_treeViewNotes_clicked(const QModelIndex &index)
-{
-    openNote(noteFromIndex(index));
-    enableNoteActions();
-}
-
 void MainWindow::on_treeViewTags_customContextMenuRequested(const QPoint& point)
 {
     QModelIndex selectedIndex = ui->treeViewTags->indexAt(point);
@@ -798,6 +845,11 @@ void MainWindow::on_toolButtonRemoveTag_clicked()
 
 //~~~~~~~~~~~~~~~~~
 
+void MainWindow::switchTabToNote()
+{
+    ui->tabWidgetNotes->setCurrentIndex(0);
+}
+
 void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
 {
     QSqlRecord note = searchModel->record(index.row());
@@ -805,6 +857,6 @@ void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
     if (idToItem.contains(id)) {
         NoteItem* item = idToItem.value(id);
         openNote(item->getValue());
-        ui->tabWidgetNotes->setCurrentIndex(0);
+        switchTabToNote();
     }
 }

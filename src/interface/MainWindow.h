@@ -68,11 +68,15 @@ public slots:
 
     //Notes
     void enableNoteActions();
+    void disableNoteActions();
     void enableNodeEditWidgets();
+    void disableNodeEditWidgets();
     void selectFromModels();
     void filterModelsForNote(const Id& id);
     void setWidgetTitles(const QString& title);
     void openNote(Note* note);
+    void openSelectedNote();
+    void closeNote();
     Note* createNote(const QString& title, const Id& parentId);
     optional<Note*> createNoteIfNotExists(const QString& title, const Id& parentId);
     void addSubnote(const QModelIndex& parentIndex);
@@ -134,7 +138,6 @@ public slots:
     void on_actionAboutQt_triggered();
 
     void on_treeViewNotes_customContextMenuRequested(const QPoint& point);
-    void on_treeViewNotes_clicked(const QModelIndex& index);
 
     void on_treeViewTags_customContextMenuRequested(const QPoint& point);
     void on_treeViewTags_doubleClicked(const QModelIndex& index);
@@ -148,6 +151,12 @@ public slots:
     void on_toolButtonRemoveTag_clicked();
 
     void on_tableViewSearch_clicked(const QModelIndex& index);
+
+    void selectNoteInTree();
+
+    void switchTabToSearchResults();
+
+    void switchTabToNote();
 
 signals:
     void noteAdded(const Note* note, const QModelIndex& index);

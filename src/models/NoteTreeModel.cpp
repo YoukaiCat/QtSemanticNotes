@@ -24,10 +24,13 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    if (role != Qt::DisplayRole)
-        return QVariant();
+    if (role == Qt::DisplayRole)
+        return itemFromIndex(index)->getValue()->getTitle();
 
-    return itemFromIndex(index)->getValue()->getTitle();
+    if (role == Qt::UserRole)
+        return itemFromIndex(index)->getValue()->getId();
+
+    return QVariant();
 }
 
 Qt::ItemFlags NoteTreeModel::flags(const QModelIndex& index) const
@@ -247,4 +250,15 @@ void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
     //Subnotes should be removed by sql trigger
     item->getValue()->remove();
     delete item;
+}
+
+optional<QModelIndex> NoteTreeModel::findIndexByNoteId(const Id& id, const QModelIndex& rootIndex)
+{
+    QModelIndexList indexes = match(rootIndex, Qt::UserRole, QVariant(id), 1,
+                                    Qt::MatchFlags(Qt::MatchExactly | Qt::MatchRecursive));
+    if(indexes.isEmpty()) {
+        return {};
+    } else {
+        return indexes.first();
+    }
 }

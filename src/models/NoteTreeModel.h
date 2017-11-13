@@ -50,6 +50,9 @@ public:
     void addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex);
     void deleteNoteAtIndex(const QModelIndex& index);
 
+    optional<QModelIndex> findIndexByNoteId(const Id& id, const QModelIndex& rootIndex);
+    void selectByIndex();
+
 private:
     NoteItem* rootItem;
 };
