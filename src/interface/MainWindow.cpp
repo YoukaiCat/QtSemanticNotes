@@ -443,6 +443,7 @@ void MainWindow::findNotes()
         searchModel->setQuery(query);
         searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
         ui->tableViewSearch->setColumnHidden(0, true);
+        ui->tabWidgetNotes->setCurrentIndex(1);
     }
 }
 
@@ -466,6 +467,7 @@ void MainWindow::findNotesByTag(const QModelIndex& index)
     searchModel->setQuery(query);
     searchModel->setHeaderData(1, Qt::Horizontal, tr("Note Title"));
     ui->tableViewSearch->setColumnHidden(0, true);
+    ui->tabWidgetNotes->setCurrentIndex(1);
 }
 
 //~~~~~~~~~~~~~~~~~~
@@ -803,5 +805,6 @@ void MainWindow::on_tableViewSearch_clicked(const QModelIndex& index)
     if (idToItem.contains(id)) {
         NoteItem* item = idToItem.value(id);
         openNote(item->getValue());
+        ui->tabWidgetNotes->setCurrentIndex(0);
     }
 }
