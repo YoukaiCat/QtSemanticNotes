@@ -117,6 +117,7 @@ public slots:
 
     //Actions
     void on_actionAdd_triggered();
+    void on_actionAddSubnote_triggered();
     void on_actionRename_triggered();
     void on_actionSave_triggered();
     void on_actionDeleteNote_triggered();

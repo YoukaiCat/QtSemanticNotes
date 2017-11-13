@@ -741,6 +741,7 @@
      <bool>false</bool>
     </property>
     <addaction name="actionAdd"/>
+    <addaction name="actionAddSubnote"/>
     <addaction name="actionRename"/>
     <addaction name="actionSave"/>
     <addaction name="separator"/>
@@ -1242,6 +1243,21 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionAddSubnote">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Add Subnote</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+N</string>
    </property>
   </action>
  </widget>

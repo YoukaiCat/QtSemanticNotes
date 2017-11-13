@@ -296,8 +296,7 @@ QString MainWindow::tagFromIndex(const QModelIndex& index)
 
 void MainWindow::enableNoteActions()
 {
-    ui->actionOpen->setEnabled(true);
-    ui->actionOpenInNewTab->setEnabled(true);
+    ui->actionAddSubnote->setEnabled(true);
     ui->actionRename->setEnabled(true);
     ui->actionSave->setEnabled(true);
     ui->actionDeleteNote->setEnabled(true);
@@ -620,11 +619,14 @@ void MainWindow::onContentModified()
 
 void MainWindow::on_actionAdd_triggered()
 {
+    addNote();
+}
+
+void MainWindow::on_actionAddSubnote_triggered()
+{
     QModelIndexList indexes = ui->treeViewNotes->selectionModel()->selectedIndexes();
     if(indexes.size() > 0) {
         addSubnote(indexes.first());
-    } else {
-        addNote();
     }
 }
 
