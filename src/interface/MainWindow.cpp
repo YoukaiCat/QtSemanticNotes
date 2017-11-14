@@ -24,6 +24,8 @@
 
 #include <QDebug>
 
+#include <QCloseEvent>
+
 #include <memory>
 using std::make_unique;
 
@@ -38,6 +40,7 @@ MainWindow::MainWindow(QWidget* parent) :
     setupTagsTree();
     setupNoteModels();
     setupSearchModel();
+    setupTrayIcon();
 
     loadPossibleLinks();
 
@@ -195,7 +198,7 @@ void MainWindow::setupTags()
     ui->tableViewNoteTags->hideColumn(0);
     ui->tableViewNoteTags->hideColumn(1);
     ui->tableViewNoteTags->hideColumn(3);
-    connect(ui->tableViewNoteTags->selectionModel(),&QItemSelectionModel::selectionChanged,
+    connect(ui->tableViewNoteTags->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &MainWindow::toggleRemoveTagButtonEnabled);
 }
 
@@ -245,6 +248,46 @@ void MainWindow::setupSearchModel()
 {
     searchModel = make_unique<QSqlQueryModel>();
     ui->tableViewSearch->setModel(searchModel.get());
+}
+
+void MainWindow::setupTrayIcon()
+{
+    minimizeAction = new QAction(tr("Mi&nimize"), this);
+    restoreAction = new QAction(tr("&Restore"), this);
+    quitAction = new QAction(tr("&Quit"), this);
+    connect(minimizeAction, &QAction::triggered, [this](){ hide(); });
+    connect(restoreAction, &QAction::triggered, [this](){ showNormal(); });
+    connect(quitAction, &QAction::triggered, [](){ qApp->quit(); });
+
+    trayMenu.addAction(minimizeAction);
+    trayMenu.addAction(restoreAction);
+    trayMenu.addSeparator();
+    trayMenu.addAction(quitAction);
+
+    tray.setContextMenu(&trayMenu);
+    tray.show();
+    connect(&tray, &QSystemTrayIcon::activated, this, &MainWindow::iconActivated);
+}
+
+void MainWindow::setVisible(bool visible)
+{
+    minimizeAction->setEnabled(visible);
+    restoreAction->setEnabled(isMaximized() || !visible);
+    QMainWindow::setVisible(visible);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    if (tray.isVisible()) {
+        hide();
+        event->ignore();
+    }
+}
+
+void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    Q_UNUSED(reason)
+    isHidden() ? showNormal() : hide();
 }
 
 //~~~~~~~~~~~~~~~~~~~~

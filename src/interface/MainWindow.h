@@ -15,6 +15,8 @@
 
 #include <QTextDocument>
 
+#include <QSystemTrayIcon>
+
 namespace Ui {
 class MainWindow;
 }
@@ -56,6 +58,11 @@ public slots:
     void setupNoteModels();
     //Search model
     void setupSearchModel();
+
+    void setupTrayIcon();
+    void setVisible(bool visible);
+    void closeEvent(QCloseEvent *event);
+    void iconActivated(QSystemTrayIcon::ActivationReason reason);
 
     //Helper
     void showCriticalErrorAndQuit(const QString& error);
@@ -200,6 +207,12 @@ private:
     unique_ptr<QSqlRelationalTableModel> tagsModel;
     unique_ptr<QSqlRelationalTableModel> linkedFromModel;
     unique_ptr<QSqlRelationalTableModel> linksToModel;
+
+    QSystemTrayIcon tray;
+    QMenu trayMenu;
+    QAction* minimizeAction;
+    QAction* restoreAction;
+    QAction* quitAction;
 };
 
 #endif // MAINWINDOW_H
