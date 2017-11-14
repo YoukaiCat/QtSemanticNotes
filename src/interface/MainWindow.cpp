@@ -35,6 +35,8 @@ MainWindow::MainWindow(QWidget* parent) :
 {
     ui->setupUi(this);
 
+    setWindowIcon(QIcon(":/icons/AppIcon"));
+
     setupDatabase();
     setupNotesTree();
     setupTagsTree();
@@ -264,6 +266,9 @@ void MainWindow::setupTrayIcon()
     trayMenu.addSeparator();
     trayMenu.addAction(quitAction);
 
+    //SVG icons not working in KDE tray
+    //See https://bugs.kde.org/show_bug.cgi?id=365131
+    tray.setIcon(QIcon(":/icons/AppIconRasterized"));
     tray.setContextMenu(&trayMenu);
     tray.show();
     connect(&tray, &QSystemTrayIcon::activated, this, &MainWindow::iconActivated);

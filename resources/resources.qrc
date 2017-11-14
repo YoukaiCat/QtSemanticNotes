@@ -232,5 +232,7 @@
         <file>themes/breeze/actions/zoom-select-y.svg</file>
         <file>themes/breeze/actions/zoom-select.svg</file>
         <file>themes/breeze/actions/zoom.svg</file>
+        <file alias="AppIcon">Notebook_by_Krishna_Noun_Project_CCBY3.svg</file>
+        <file alias="AppIconRasterized">Notebook_by_Krishna_Noun_Project_CCBY3.png</file>
     </qresource>
 </RCC>
