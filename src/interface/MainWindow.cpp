@@ -266,8 +266,9 @@ void MainWindow::setupTrayIcon()
     trayMenu.addSeparator();
     trayMenu.addAction(quitAction);
 
-    //SVG icons not working in KDE tray
+    //SVG tray icons not working in KDE
     //See https://bugs.kde.org/show_bug.cgi?id=365131
+    //https://bugreports.qt.io/browse/QTBUG-53550
     tray.setIcon(QIcon(":/icons/AppIconRasterized"));
     tray.setContextMenu(&trayMenu);
     tray.show();

@@ -802,7 +802,7 @@
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>&amp;File</string>
+     <string>&amp;App</string>
     </property>
     <addaction name="actionQuit"/>
    </widget>
