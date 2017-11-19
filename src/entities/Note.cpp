@@ -35,16 +35,16 @@ inline Note::Note(const Id& id,
       parentId(parentId)
 {}
 
-vector<unique_ptr<Note>> Note::getAll()
+vector<shared_ptr<Note>> Note::getAll()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes "
               "WHERE NOT id = 1");
     Database::safeExecPreparedQuery(q);
 
-    vector<unique_ptr<Note>> notes;
+    vector<shared_ptr<Note>> notes;
     while (q.next()) {
-        unique_ptr<Note> note(new Note(q.value(0).toUInt(),
+        shared_ptr<Note> note(new Note(q.value(0).toUInt(),
                                        q.value(1).toString(),
                                        q.value(2).toDateTime(),
                                        q.value(3).toDateTime(),
@@ -54,7 +54,7 @@ vector<unique_ptr<Note>> Note::getAll()
     return notes;
 }
 
-optional<unique_ptr<Note>> Note::getById(const Id& id)
+optional<shared_ptr<Note>> Note::getById(const Id& id)
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes"
@@ -63,7 +63,7 @@ optional<unique_ptr<Note>> Note::getById(const Id& id)
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        unique_ptr<Note> note(new Note(q.value(0).toUInt(),
+        shared_ptr<Note> note(new Note(q.value(0).toUInt(),
                                        q.value(1).toString(),
                                        q.value(2).toDateTime(),
                                        q.value(3).toDateTime(),
@@ -155,7 +155,7 @@ QString Note::toString() const
             .arg(parentId);
 }
 
-unique_ptr<Note> Note::create(const QString& title,
+shared_ptr<Note> Note::create(const QString& title,
                               const QString& content,
                               const Id& parentId)
 {
@@ -172,7 +172,7 @@ unique_ptr<Note> Note::create(const QString& title,
     insertNotesQuery.bindValue(":parent_id", parentId);
     Database::safeExecPreparedQuery(insertNotesQuery);
 
-    unique_ptr<Note> note(new Note(insertNotesQuery.lastInsertId().toUInt(), title, content, now, now, parentId));
+    shared_ptr<Note> note(new Note(insertNotesQuery.lastInsertId().toUInt(), title, content, now, now, parentId));
     return note;
 }
 

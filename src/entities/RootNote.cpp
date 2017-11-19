@@ -16,7 +16,7 @@ inline RootNote::RootNote(const Id& id,
     : Note(id, title, createdAt, updatedAt, 0)
 {}
 
-unique_ptr<RootNote> RootNote::getRootNote()
+shared_ptr<RootNote> RootNote::getRootNote()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at "
@@ -24,7 +24,7 @@ unique_ptr<RootNote> RootNote::getRootNote()
     Database::safeExecPreparedQuery(q);
     q.next();
 
-    unique_ptr<RootNote> note(new RootNote(
+    shared_ptr<RootNote> note(new RootNote(
                                   q.value(0).toUInt(),
                                   q.value(1).toString(),
                                   q.value(2).toDateTime(),

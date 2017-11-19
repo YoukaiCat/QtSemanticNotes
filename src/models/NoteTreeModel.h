@@ -51,7 +51,6 @@ public:
     void deleteNoteAtIndex(const QModelIndex& index);
 
     optional<QModelIndex> findIndexByNoteId(const Id& id, const QModelIndex& rootIndex);
-    void selectByIndex();
 
 private:
     NoteItem* rootItem;

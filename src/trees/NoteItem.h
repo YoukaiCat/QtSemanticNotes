@@ -5,29 +5,30 @@
 
 #include <QList>
 
+using std::unique_ptr;
+
 class NoteItem
 {
 public:
-    explicit NoteItem();
-    explicit NoteItem(Note* note, NoteItem* parent = nullptr);
-    ~NoteItem();
+    explicit NoteItem(shared_ptr<Note> note);
 
-    void addChild(NoteItem* item);
-    void addChildAndUpdateNoteParent(NoteItem* item);
-
-    NoteItem* getChild(const int& index) const;
-    NoteItem* getParent() const;
+    void addChild(unique_ptr<NoteItem> && item);
+    void addChildAndUpdateNoteParent(unique_ptr<NoteItem> && item);
 
     int childNumber() const;
     int childCount() const;
 
+    NoteItem* getChild(const int& index) const;
+    NoteItem* getParent() const;
+
+    //unique_ptr<NoteItem> takeChildAt(const int& index);
     void removeChild(const int& index);
 
-    Note* getValue() const;
+    shared_ptr<Note> getValue() const;
 
 private:
-    Note* value;
-    QList<NoteItem*> children;
+    shared_ptr<Note> value;
+    QList<unique_ptr<NoteItem>> children;
     NoteItem* parent;
 };
 

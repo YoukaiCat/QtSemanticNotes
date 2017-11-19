@@ -1,31 +1,20 @@
 #include "NoteItem.h"
 
-NoteItem::NoteItem()
+NoteItem::NoteItem(shared_ptr<Note> value)
+    : value(move(value))
 {}
 
-NoteItem::NoteItem(Note* value, NoteItem* parent)
-    : value(value),
-      parent(parent)
+void NoteItem::addChild(unique_ptr<NoteItem> && item)
 {
-    if (parent) parent->children.append(this);
-}
-
-NoteItem::~NoteItem()
-{
-    qDeleteAll(children);
-}
-
-void NoteItem::addChild(NoteItem* item)
-{
-    children.append(item);
+    children.append(move(item));
     item->parent = this;
 }
 
-void NoteItem::addChildAndUpdateNoteParent(NoteItem* item)
+void NoteItem::addChildAndUpdateNoteParent(unique_ptr<NoteItem> && item)
 {
-    addChild(item);
+    addChild(move(item));
     uint id = this->getValue()->getId();
-    Note* note = item->getValue();
+    auto note = item->getValue();
     note->setParentId(id);
     note->update();
 }
@@ -33,7 +22,12 @@ void NoteItem::addChildAndUpdateNoteParent(NoteItem* item)
 int NoteItem::childNumber() const
 {
     if (parent) {
-        return parent->children.indexOf(const_cast<NoteItem*>(this));
+        auto it = std::find_if(parent->children.begin(),
+                               parent->children.end(),
+                               [this](auto item){
+            return item.get() == this;
+        });
+        return std::distance(parent->children.begin(), it);
     } else {
         return 0;
     }
@@ -44,6 +38,11 @@ int NoteItem::childCount() const
     return children.count();
 }
 
+//unique_ptr<NoteItem> NoteItem::takeAt(const int& index)
+//{
+//    return children.takeAt(index);
+//}
+
 void NoteItem::removeChild(const int& index)
 {
     children.removeAt(index);
@@ -51,7 +50,7 @@ void NoteItem::removeChild(const int& index)
 
 NoteItem* NoteItem::getChild(const int& index) const
 {
-    return children.at(index);
+    return children.at(index).get();
 }
 
 NoteItem* NoteItem::getParent() const
@@ -59,7 +58,7 @@ NoteItem* NoteItem::getParent() const
     return parent;
 }
 
-Note* NoteItem::getValue() const
+shared_ptr<Note> NoteItem::getValue() const
 {
     return value;
 }

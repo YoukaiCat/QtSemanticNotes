@@ -6,7 +6,7 @@
 class RootNote : public Note
 {
 public:
-    static unique_ptr<RootNote> getRootNote();
+    static shared_ptr<RootNote> getRootNote();
 
     virtual Id getParentId() const override;
     virtual void setParentId(const Id& value) override;

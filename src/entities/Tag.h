@@ -18,11 +18,11 @@ using std::move;
 class Tag
 {
 public:
-    static unique_ptr<Tag> create(const QString& name);
-    static unique_ptr<Tag> getOrCreate(const QString& name);
-    static vector<unique_ptr<Tag>> getAll();
-    static optional<unique_ptr<Tag>> getById(const Id& id);
-    static optional<unique_ptr<Tag>> getByName(const QString& name);
+    static shared_ptr<Tag> create(const QString& name);
+    static shared_ptr<Tag> getOrCreate(const QString& name);
+    static vector<shared_ptr<Tag>> getAll();
+    static optional<shared_ptr<Tag>> getById(const Id& id);
+    static optional<shared_ptr<Tag>> getByName(const QString& name);
 
     Id getId() const;
 

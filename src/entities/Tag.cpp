@@ -17,15 +17,15 @@ inline Tag::Tag(const Id& id,
       createdAt(createdAt)
 {}
 
-vector<unique_ptr<Tag>> Tag::getAll()
+vector<shared_ptr<Tag>> Tag::getAll()
 {
     QSqlQuery q;
     q.prepare("SELECT id, name, created_at FROM tags");
     Database::safeExecPreparedQuery(q);
 
-    vector<unique_ptr<Tag>> tags;
+    vector<shared_ptr<Tag>> tags;
     while (q.next()) {
-        unique_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         tags.push_back(move(tag));
@@ -33,7 +33,7 @@ vector<unique_ptr<Tag>> Tag::getAll()
     return tags;
 }
 
-optional<unique_ptr<Tag>> Tag::getById(const Id& id)
+optional<shared_ptr<Tag>> Tag::getById(const Id& id)
 {
     QSqlQuery q;
     q.prepare("SELECT id, name, created_at FROM tags "
@@ -42,7 +42,7 @@ optional<unique_ptr<Tag>> Tag::getById(const Id& id)
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        unique_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         return tag;
@@ -51,7 +51,7 @@ optional<unique_ptr<Tag>> Tag::getById(const Id& id)
     }
 }
 
-optional<unique_ptr<Tag> > Tag::getByName(const QString& name)
+optional<shared_ptr<Tag> > Tag::getByName(const QString& name)
 {
     QSqlQuery q;
     q.prepare("SELECT id, name, created_at FROM tags "
@@ -97,7 +97,7 @@ QString Tag::toString() const
             .arg(createdAt.toString());
 }
 
-unique_ptr<Tag> Tag::create(const QString& name)
+shared_ptr<Tag> Tag::create(const QString& name)
 {
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
@@ -113,7 +113,7 @@ unique_ptr<Tag> Tag::create(const QString& name)
     return tag;
 }
 
-unique_ptr<Tag> Tag::getOrCreate(const QString& name)
+shared_ptr<Tag> Tag::getOrCreate(const QString& name)
 {
     auto tagOpt = Tag::getByName(name);
     if(tagOpt.has_value()) {

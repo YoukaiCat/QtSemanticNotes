@@ -11,17 +11,17 @@
 #include <memory>
 using std::vector;
 using std::optional;
-using std::unique_ptr;
+using std::shared_ptr;
 using std::move;
 
 class Note
 {
 public:
-    static unique_ptr<Note> create(const QString& title,
+    static shared_ptr<Note> create(const QString& title,
                                    const QString& content,
                                    const Id& parentId);
-    static vector<unique_ptr<Note>> getAll();
-    static optional<unique_ptr<Note>> getById(const Id& id);
+    static vector<shared_ptr<Note>> getAll();
+    static optional<shared_ptr<Note>> getById(const Id& id);
     static bool existWithTitleOrAlias(const QString& titleOrAlias);
 
     virtual ~Note() {}

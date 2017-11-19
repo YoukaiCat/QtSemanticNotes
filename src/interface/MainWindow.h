@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "../models/NoteTreeModel.h"
+
 #include "../models/TagTreeModel.h"
 
 #include "../entities/RootNote.h"
@@ -185,22 +185,22 @@ signals:
 private:
     Ui::MainWindow* ui;
 
-    unique_ptr<RootNote> rootNote;
-    vector<unique_ptr<Note>> notes;
-    QHash<Id, NoteItem*> idToItem;
+//    unique_ptr<RootNote> rootNote;
+//    vector<unique_ptr<Note>> notes;
+//    QHash<Id, NoteItem*> idToItem;
 
-    NoteItem* noteRootItem;
-    NoteItem* noteRealRootItem;
-    TagItem* tagRootItem;
-
-    unique_ptr<NoteTreeModel> noteTreeModel;
-    unique_ptr<TagTreeModel> tagTreeModel;
+//    NoteItem* noteRootItem;
+//    NoteItem* noteRealRootItem;
+//    TagItem* tagRootItem;
 
     QPair<QHash<QString,Id>,QString> possibleLinks;
 
-    Note* currentNote;
+//    Note* currentNote;
 
     QTextDocument content;
+
+
+    unique_ptr<TagTreeModel> tagTreeModel;
 
     unique_ptr<QSqlQueryModel> searchModel;
     unique_ptr<QSqlTableModel> aliasesModel;
