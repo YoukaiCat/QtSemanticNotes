@@ -38,6 +38,10 @@ MainWindow::MainWindow(QWidget* parent) :
     setWindowIcon(QIcon(":/icons/AppIcon"));
 
     setupDatabase();
+
+    connect(ui->treeViewNotes->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &MainWindow::openSelectedNote);
+
     setupNotesTree();
     setupTagsTree();
     setupNoteModels();
@@ -82,89 +86,6 @@ void MainWindow::setupDatabase()
     } catch (QueryException&) {
         showCriticalErrorAndQuit(tr("Can't open database"));
     }
-}
-
-void MainWindow::setupNotesTreeRoot()
-{
-    rootNote = RootNote::getRootNote();
-    noteRootItem = new NoteItem(rootNote.get()); //Model is the owner
-    noteRealRootItem = new NoteItem(rootNote.get(), noteRootItem);
-    idToItem.insert(rootNote->getId(), noteRealRootItem);
-}
-
-void MainWindow::createItemsForNotes()
-{
-    for(auto& note : notes) {
-        NoteItem* item = new NoteItem(note.get());
-        idToItem.insert(note->getId(), item);
-    }
-}
-
-void MainWindow::setItemChilds()
-{
-    for(auto& note : notes) {
-        NoteItem* item = idToItem[note->getId()];
-        NoteItem* parent = idToItem[note->getParentId()];
-        parent->addChild(item);
-    }
-}
-
-void MainWindow::setupNotesTreeChildren()
-{
-    notes = Note::getAll();
-    createItemsForNotes();
-    setItemChilds();
-}
-
-void MainWindow::fixRoot()
-{
-    QModelIndex rootIndex = noteTreeModel->index(0, 0, QModelIndex());
-    ui->treeViewNotes->setRootIndex(rootIndex);
-}
-
-void MainWindow::setupNotesTreeModel()
-{
-    noteTreeModel = make_unique<NoteTreeModel>(noteRootItem);
-    ui->treeViewNotes->setModel(noteTreeModel.get());
-    fixRoot();
-    connect(ui->treeViewNotes->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &MainWindow::openSelectedNote);
-}
-
-void MainWindow::setupNotesTree()
-{
-    setupNotesTreeRoot();
-    setupNotesTreeChildren();
-    setupNotesTreeModel();
-}
-
-void MainWindow::setupTagsTreeRoot()
-{
-    tagRootItem = new TagItem(); //Model is the owner
-}
-
-void MainWindow::setupTagsTreeChildren()
-{
-    vector<unique_ptr<Tag>> tags = Tag::getAll();
-    for(auto& tag : tags) {
-        QString name = tag->getName();
-        //TODO Preferences for tag part separator
-        QStringList words = name.split(".");
-        tagRootItem->insert(words);
-    }
-}
-
-void MainWindow::setupTagsTreeModel()
-{
-    tagTreeModel = make_unique<TagTreeModel>(tagRootItem);
-    ui->treeViewTags->setModel(tagTreeModel.get());
-}
-
-void MainWindow::setupTagsTree()
-{
-    setupTagsTreeRoot();
-    setupTagsTreeChildren();
-    setupTagsTreeModel();
 }
 
 void MainWindow::createAliasesModel()
