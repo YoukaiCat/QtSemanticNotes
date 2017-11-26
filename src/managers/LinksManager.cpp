@@ -148,8 +148,9 @@ QString LinksManager::makeLinks(QString rightPart)
     QRegularExpressionMatch match = titlesRegex.match(rightPart);
     while(match.hasMatch()) {
         QString title = match.captured(0);
-        Q_ASSERT(possibleLinks.first.contains(title));
-        Id id = possibleLinks.first.value(title);
+        QString casefoldTitle = QLocale::system().toLower(title);
+        Q_ASSERT(possibleLinks.first.contains(casefoldTitle));
+        Id id = possibleLinks.first.value(casefoldTitle);
         QString link = QString("<a href='qtsemanticnotes://0.0.0.0/?%1'>%2</a>").arg(id).arg(title);
         int position = match.capturedStart() + match.capturedLength();
         leftPart = rightPart.left(position);
@@ -169,9 +170,9 @@ QList<Id> LinksManager::findLinks(const QString& text)
     QRegularExpressionMatchIterator i = titlesRegex.globalMatch(text);
     while(i.hasNext()) {
         QRegularExpressionMatch match = i.next();
-        QString word = match.captured(0);
-        if(possibleLinks.first.contains(word)) {
-            linkedNotes.append(possibleLinks.first.value(word));
+        QString title = QLocale::system().toLower(match.captured(0));
+        if(possibleLinks.first.contains(title)) {
+            linkedNotes.append(possibleLinks.first.value(title));
         }
     }
     return linkedNotes;

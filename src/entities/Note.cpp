@@ -4,6 +4,7 @@
 
 #include <QSqlQuery>
 #include <QSqlRecord>
+#include <QLocale>
 
 #include <QDebug>
 
@@ -253,8 +254,9 @@ QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
     while(q.next()) {
          Id id = q.value(0).toUInt();
          QString title = q.value(1).toString();
-         titleToId.insert(title, id);
-         possibleLinksOrdered.append(title);
+         QString casefoldTitle = QLocale::system().toLower(title);
+         titleToId.insert(casefoldTitle, id);
+         possibleLinksOrdered.append(casefoldTitle);
     }
     return qMakePair(titleToId, possibleLinksOrdered.join('|'));
 }
