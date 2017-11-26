@@ -77,10 +77,6 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(&notesManager, &NotesManager::noteAdded,
             &notesManager, &NotesManager::selectNoteInTree);
 
-    //Закрыть заметку после её удаления (в базе данных)
-    connect(&notesManager, &NotesManager::noteRemoved,
-            &notesManager, &NotesManager::closeNote);
-
     //Обновить дерево тегов после удаления заметки (а значит и всех её тегов)
     connect(&notesManager, &NotesManager::noteRemoved,
             &tagsManager, &TagsManager::loadTags);
