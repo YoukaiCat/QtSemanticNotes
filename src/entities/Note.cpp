@@ -9,7 +9,7 @@
 
 using std::make_unique;
 
-inline Note::Note(const Id& id,
+Note::Note(const Id& id,
                   const QString& title,
                   const QDateTime& createdAt,
                   const QDateTime& updatedAt,
@@ -21,7 +21,7 @@ inline Note::Note(const Id& id,
       parentId(parentId)
 {}
 
-inline Note::Note(const Id& id,
+Note::Note(const Id& id,
                   const QString& title,
                   const optional<QString>& content,
                   const QDateTime& createdAt,
@@ -217,6 +217,12 @@ void Note::remove()
               "WHERE id = :id");
     q.bindValue(":id", id);
     Database::safeExecPreparedQuery(q);
+    deleted = true;
+}
+
+bool Note::isDeleted()
+{
+    return deleted;
 }
 
 void Note::addNoteAlias(const Note* note, const QString& alias)
@@ -238,8 +244,7 @@ QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
     QSqlQuery q;
     q.prepare("SELECT id, title, length(title) FROM notes "
               "UNION "
-              "SELECT notes.id, aliases.alias, length(aliases.alias) FROM notes "
-              "JOIN aliases ON aliases.note_id = notes.id "
+              "SELECT note_id, alias, length(alias) FROM aliases "
               "ORDER BY 3 DESC");
     Database::safeExecPreparedQuery(q);
 
@@ -268,11 +273,32 @@ void Note::addNoteLink(const Id& noteFrom, const Id& noteTo)
     Database::safeExecPreparedQuery(insertNoteAlias);
 }
 
-void Note::clearLinks(const Id& noteFrom)
+
+void Note::clearLinksFrom(const Id& noteFrom)
 {
     QSqlQuery q;
     q.prepare("DELETE FROM links "
               "WHERE from_note_id = :from_note_id");
     q.bindValue(":from_note_id", noteFrom);
     Database::safeExecPreparedQuery(q);
+}
+
+void Note::clearLinksTo(const Id& noteTo)
+{
+    QSqlQuery q;
+    q.prepare("DELETE FROM links "
+              "WHERE to_note_id = :to_note_id");
+    q.bindValue(":to_note_id", noteTo);
+    Database::safeExecPreparedQuery(q);
+}
+
+QDebug operator<<(QDebug stream, const Note& note) {
+    stream << note.getTitle();
+    return stream;
+}
+
+QDebug operator<<(QDebug stream, const shared_ptr<Note> note)
+{
+    stream << *note;
+    return stream;
 }

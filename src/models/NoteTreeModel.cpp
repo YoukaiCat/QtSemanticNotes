@@ -3,15 +3,10 @@
 #include <QMimeData>
 #include <QDataStream>
 
-NoteTreeModel::NoteTreeModel(NoteItem* rootItem, QObject* parent)
+NoteTreeModel::NoteTreeModel(unique_ptr<NoteItem> && rootItem, QObject* parent)
     : QAbstractItemModel(parent),
-      rootItem(rootItem)
+      rootItem(move(rootItem))
 {}
-
-NoteTreeModel::~NoteTreeModel()
-{
-    delete rootItem;
-}
 
 int NoteTreeModel::columnCount(const QModelIndex& parent) const
 {
@@ -60,7 +55,7 @@ QModelIndex NoteTreeModel::index(int row, int column, const QModelIndex& parent)
     NoteItem* parentItem;
 
     if (!parent.isValid()) {
-        parentItem = rootItem;
+        parentItem = rootItem.get();
     } else {
         parentItem = itemFromIndex(parent);
     }
@@ -81,7 +76,7 @@ QModelIndex NoteTreeModel::parent(const QModelIndex& index) const
     NoteItem* childItem = itemFromIndex(index);
     NoteItem* parentItem = childItem->getParent();
 
-    if (parentItem == rootItem)
+    if (parentItem == rootItem.get())
         return QModelIndex();
 
     return createIndex(parentItem->childNumber(), 0, parentItem);
@@ -94,7 +89,7 @@ int NoteTreeModel::rowCount(const QModelIndex& parent) const
 
     NoteItem* parentItem;
     if (!parent.isValid()) {
-        parentItem = rootItem;
+        parentItem = rootItem.get();
     } else {
         parentItem = itemFromIndex(parent);
     }
@@ -207,31 +202,40 @@ inline NoteItem* NoteTreeModel::itemFromIndex(const QModelIndex& index) const
     return static_cast<NoteItem*>(index.internalPointer());
 }
 
-void NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& index)
+shared_ptr<Note> NoteTreeModel::noteFromIndex(const QModelIndex& index) const
+{
+    return itemFromIndex(index)->getValue();
+}
+
+optional<shared_ptr<Note>> NoteTreeModel::renameNoteAtIndex(const QString& title, const QModelIndex& index)
 {
     if (!index.isValid())
-        return;
+        return {};
 
     NoteItem* item = itemFromIndex(index);
-    Note* note = item->getValue();
+    auto note = item->getValue();
     note->setTitle(title);
     note->update();
 
     emit dataChanged(index, index, QVector<int>());
+
+    return note;
 }
 
-void NoteTreeModel::addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex)
+optional<shared_ptr<Note>> NoteTreeModel::addSubnoteAtIndex(const QString& title, const QModelIndex& parentIndex)
 {
     if (!parentIndex.isValid())
-        return;
+        return {};
 
-    NoteItem* noteItem = new NoteItem(note);
     NoteItem* parentItem = itemFromIndex(parentIndex);
+    auto note = Note::create(title, "", parentItem->getValue()->getId());
+    NoteItem* noteItem = new NoteItem(note);
 
     int newRow = parentItem->childCount();
     beginInsertRows(parentIndex, newRow, newRow);
-        parentItem->addChildAndUpdateNoteParent(noteItem);
+        parentItem->addChild(noteItem);
     endInsertRows();
+    return note;
 }
 
 void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)

@@ -61,6 +61,8 @@ public:
             QString m("Query error:\n");
             m.append(query.lastQuery());
             m.append(query.lastError().text());
+            qDebug() << query.executedQuery();
+            qDebug() << query.boundValues();
             qDebug() << query.lastQuery();
             qDebug() << query.lastError().text();
             throw QueryException(m);

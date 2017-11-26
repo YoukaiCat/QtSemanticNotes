@@ -7,13 +7,15 @@
 #include <QModelIndex>
 #include <QVariant>
 
+#include <memory>
+using std::unique_ptr;
+
 class TagTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
 public:
-    TagTreeModel(TagItem* rootItem, QObject* parent = nullptr);
-    ~TagTreeModel();
+    TagTreeModel(unique_ptr<TagItem> && rootItem, QObject* parent = nullptr);
 
     QVariant data(const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -33,11 +35,12 @@ public:
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
 
     TagItem* itemFromIndex(const QModelIndex& index) const;
+    QString tagFromIndex(const QModelIndex& index) const;
 
     void deleteTagAtIndex(const QModelIndex& index);
 
 private:
-    TagItem* rootItem;
+    unique_ptr<TagItem> rootItem;
 };
 
 

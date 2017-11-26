@@ -256,50 +256,6 @@
            <property name="tabBarAutoHide">
             <bool>true</bool>
            </property>
-           <widget class="QWidget" name="tabNoteContent">
-            <attribute name="title">
-             <string>Note</string>
-            </attribute>
-            <layout class="QGridLayout" name="gridLayout_5">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <property name="spacing">
-              <number>0</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QTextBrowser" name="textBrowserNoteContent">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
-               </property>
-               <property name="lineWidth">
-                <number>0</number>
-               </property>
-               <property name="undoRedoEnabled">
-                <bool>true</bool>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="openExternalLinks">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
            <widget class="QWidget" name="tabSearch">
             <attribute name="title">
              <string>Search</string>
@@ -743,29 +699,10 @@
     <addaction name="actionAdd"/>
     <addaction name="actionAddSubnote"/>
     <addaction name="actionRename"/>
-    <addaction name="actionSave"/>
     <addaction name="separator"/>
     <addaction name="actionDeleteNote"/>
     <addaction name="separator"/>
     <addaction name="actionFindNote"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>&amp;Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionCut"/>
-    <addaction name="actionCopy"/>
-    <addaction name="actionPaste"/>
-    <addaction name="actionDelete"/>
-    <addaction name="separator"/>
-    <addaction name="actionSelectAll"/>
-    <addaction name="separator"/>
-    <addaction name="actionFind"/>
-    <addaction name="separator"/>
-    <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -789,8 +726,8 @@
     <property name="title">
      <string>Navi&amp;gation</string>
     </property>
-    <addaction name="actionPrevious"/>
-    <addaction name="actionNext"/>
+    <addaction name="actionBackward"/>
+    <addaction name="actionForward"/>
    </widget>
    <widget class="QMenu" name="menuTag">
     <property name="title">
@@ -809,7 +746,6 @@
    <addaction name="menuFile"/>
    <addaction name="menuNote"/>
    <addaction name="menuTag"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuNavigation"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
@@ -897,81 +833,6 @@
     <string>Show note references</string>
    </property>
   </action>
-  <action name="actionUndo">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-undo">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-redo">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Redo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+Z</string>
-   </property>
-  </action>
-  <action name="actionCut">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-cut">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
-  </action>
-  <action name="actionCopy">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-copy">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Copy</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
-   </property>
-  </action>
-  <action name="actionPaste">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-paste">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Paste</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V</string>
-   </property>
-  </action>
   <action name="actionQuit">
    <property name="icon">
     <iconset theme="application-exit">
@@ -984,77 +845,7 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionExport">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Export</string>
-   </property>
-  </action>
-  <action name="actionFind">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-find">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Find in current note</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+F</string>
-   </property>
-  </action>
-  <action name="actionPrev">
-   <property name="text">
-    <string>Prev</string>
-   </property>
-  </action>
-  <action name="actionDelete">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-delete">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Delete</string>
-   </property>
-   <property name="shortcut">
-    <string>Del</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="gtk-preferences">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Settings</string>
-   </property>
-  </action>
-  <action name="actionSelectAll">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="edit-select-all">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Select All</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+A</string>
-   </property>
-  </action>
-  <action name="actionPrevious">
+  <action name="actionBackward">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1066,10 +857,10 @@
     <string>Previous</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Left</string>
+    <string>Ctrl+Left, Backspace</string>
    </property>
   </action>
-  <action name="actionNext">
+  <action name="actionForward">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1099,11 +890,6 @@
     <string>Ctrl+E</string>
    </property>
   </action>
-  <action name="actionEditMode">
-   <property name="text">
-    <string>Edit Mode</string>
-   </property>
-  </action>
   <action name="actionAdd">
    <property name="icon">
     <iconset theme="document-new">
@@ -1116,31 +902,6 @@
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionOpenTab">
-   <property name="text">
-    <string>Open Tab</string>
-   </property>
-  </action>
-  <action name="actionCloseTab">
-   <property name="text">
-    <string>Close Tab</string>
-   </property>
-  </action>
-  <action name="actionOpen">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Open</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
-  </action>
   <action name="actionDeleteNote">
    <property name="enabled">
     <bool>false</bool>
@@ -1151,29 +912,6 @@
    </property>
    <property name="text">
     <string>Delete</string>
-   </property>
-  </action>
-  <action name="actionClose">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Close</string>
-   </property>
-  </action>
-  <action name="actionOpenInNewTab">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Open in New Tab</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+O</string>
    </property>
   </action>
   <action name="actionFindByTag">
@@ -1264,22 +1002,6 @@
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
  <connections>
-  <connection>
-   <sender>actionQuit</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>439</x>
-     <y>303</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>actionShowNotesTree</sender>
    <signal>toggled(bool)</signal>

@@ -7,7 +7,7 @@ QSqlQuery Search::findNotesByWords(const QString& words)
     QSqlQuery q;
     q.prepare("SELECT rowid AS id, title FROM notes_fts WHERE notes_fts MATCH :words "
               "UNION "
-              "SELECT rowid AS id, alias AS title FROM aliases_fts WHERE aliases_fts MATCH :alias_words");
+              "SELECT note_id AS id, alias AS title FROM aliases_fts WHERE aliases_fts MATCH :alias_words");
     q.bindValue(":words", words);
     q.bindValue(":alias_words", words);
     Database::safeExecPreparedQuery(q);
@@ -17,8 +17,8 @@ QSqlQuery Search::findNotesByWords(const QString& words)
 QSqlQuery Search::findNotesByContent(const QString& words)
 {
     QSqlQuery q;
-    q.prepare("SELECT rowid AS id, content FROM notes_fts WHERE notes_fts MATCH 'content : :words'");
-    q.bindValue(":words", words);
+    //Really tired to fight with bindvalue and colon inside query, sorry
+    q.prepare(QString("SELECT rowid AS id, content FROM notes_fts WHERE notes_fts MATCH 'content : \"%1\"'").arg(words));
     Database::safeExecPreparedQuery(q);
     return q;
 }

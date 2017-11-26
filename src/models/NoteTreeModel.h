@@ -12,8 +12,7 @@ class NoteTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    NoteTreeModel(NoteItem* rootItem, QObject* parent = nullptr);
-    ~NoteTreeModel();
+    NoteTreeModel(unique_ptr<NoteItem> && rootItem, QObject* parent = nullptr);
 
     QVariant data(const QModelIndex& index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -45,15 +44,16 @@ public:
                       const QModelIndex& parent) override;
 
     NoteItem* itemFromIndex(const QModelIndex& index) const;
+    shared_ptr<Note> noteFromIndex(const QModelIndex& index) const;
 
-    void renameNoteAtIndex(const QString& title, const QModelIndex& index);
-    void addSubnoteAtIndex(Note* note, const QModelIndex& parentIndex);
+    optional<shared_ptr<Note>> renameNoteAtIndex(const QString& title, const QModelIndex& index);
+    optional<shared_ptr<Note>> addSubnoteAtIndex(const QString& title, const QModelIndex& parentIndex);
     void deleteNoteAtIndex(const QModelIndex& index);
 
     optional<QModelIndex> findIndexByNoteId(const Id& id, const QModelIndex& rootIndex);
 
 private:
-    NoteItem* rootItem;
+    unique_ptr<NoteItem> rootItem;
 };
 
 

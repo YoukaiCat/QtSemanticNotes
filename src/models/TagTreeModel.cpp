@@ -3,15 +3,10 @@
 #include <QMimeData>
 #include <QDataStream>
 
-TagTreeModel::TagTreeModel(TagItem* rootItem, QObject* parent)
+TagTreeModel::TagTreeModel(unique_ptr<TagItem> && rootItem, QObject* parent)
     : QAbstractItemModel(parent),
-      rootItem(rootItem)
+      rootItem(move(rootItem))
 {}
-
-TagTreeModel::~TagTreeModel()
-{
-    delete rootItem;
-}
 
 int TagTreeModel::columnCount(const QModelIndex& parent) const
 {
@@ -55,7 +50,7 @@ QModelIndex TagTreeModel::index(int row, int column, const QModelIndex& parent) 
     TagItem* parentItem;
 
     if (!parent.isValid()) {
-        parentItem = rootItem;
+        parentItem = rootItem.get();
     } else {
         parentItem = itemFromIndex(parent);
     }
@@ -76,7 +71,7 @@ QModelIndex TagTreeModel::parent(const QModelIndex& index) const
     TagItem* childItem = itemFromIndex(index);
     TagItem* parentItem = childItem->getParent();
 
-    if (parentItem == rootItem)
+    if (parentItem == rootItem.get())
         return QModelIndex();
 
     return createIndex(parentItem->childNumber(), 0, parentItem);
@@ -89,7 +84,7 @@ int TagTreeModel::rowCount(const QModelIndex& parent) const
 
     TagItem* parentItem;
     if (!parent.isValid()) {
-        parentItem = rootItem;
+        parentItem = rootItem.get();
     } else {
         parentItem = itemFromIndex(parent);
     }
@@ -124,9 +119,15 @@ QMimeData* TagTreeModel::mimeData(const QModelIndexList& indexes) const
     return mimeData;
 }
 
-inline TagItem* TagTreeModel::itemFromIndex(const QModelIndex& index) const
+TagItem* TagTreeModel::itemFromIndex(const QModelIndex& index) const
 {
     return static_cast<TagItem*>(index.internalPointer());
+}
+
+QString TagTreeModel::tagFromIndex(const QModelIndex& index) const
+{
+    QStringList words;
+    return itemFromIndex(index)->getFullTag(words);
 }
 
 void TagTreeModel::deleteTagAtIndex(const QModelIndex& index)

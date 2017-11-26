@@ -45,6 +45,8 @@ public:
     virtual void update();
     virtual void remove();
 
+    virtual bool isDeleted();
+
     Note(const Note&) = delete;
     Note & operator=(const Note&) = delete;
     Note(Note&& other) noexcept = delete;
@@ -54,7 +56,11 @@ public:
 
     static QPair<QHash<QString,Id>,QString> getPossibleLinks();
     static void addNoteLink(const Id& noteFrom, const Id& noteTo);
-    static void clearLinks(const Id& noteFrom);
+    static void clearLinksFrom(const Id& noteFrom);
+    static void clearLinksTo(const Id& noteTo);
+
+    friend QDebug operator<<(QDebug stream, const Note &note);
+    friend QDebug operator<<(QDebug stream, const shared_ptr<Note> note);
 
 protected:
     Id id;
@@ -63,6 +69,7 @@ protected:
     QDateTime createdAt;
     QDateTime updatedAt;
     Id parentId;
+    bool deleted = false;
 
     Note(const Id& id,
          const QString& title,

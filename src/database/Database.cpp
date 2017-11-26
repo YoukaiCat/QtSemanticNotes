@@ -73,6 +73,11 @@ void Database::openDatabase(const QString& path)
         throw OpenDBException(QSqlDatabase::database().lastError());
     }
 
+    //For some magical reason ON DELETE CASCADE
+    //works only when the pragma query is the first query
+    //https://forum.qt.io/topic/77967/foreign-key-is-ignored-when-deleting/3
+    safeExecQuery("PRAGMA foreign_keys = ON;");
+
     QSqlQuery query("select name from application");
     if (!(query.next() && (query.value(0).toString() == QString("QtSemanticNotes")))) {
         if (QSqlDatabase::database().transaction()) {
@@ -113,28 +118,23 @@ void Database::defineSchema()
             "id INTEGER PRIMARY KEY, "
             "title TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "content CLOB NOT NULL DEFAULT '', "
-            "parent_id INTEGER REFERENCES notes(id), "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
-            "updated_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "parent_id INTEGER REFERENCES notes(id) ON DELETE CASCADE, "
+            "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
+            "updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')) "
         ")");
 
-    //For some magical reason recursive ON DELETE CASCADE
-    //doesn't work when using qt sqlite driver so using a recursive trigger
-    safeExecQuery(
-        "CREATE TRIGGER after_delete_note_delete_subnotes "
-        "AFTER DELETE ON notes "
-        "BEGIN "
-            "DELETE FROM notes WHERE parent_id = OLD.id; "
-        "END;");
-
     safeExecQuery("CREATE INDEX notes_parent_id_fk ON notes(parent_id)");
+
+    //Insert root note before fts triggers are created
+    safeExecQuery("INSERT INTO notes (id, title, parent_id)"
+        "values (1, 'root', NULL)");
 
     safeExecQuery(
         "CREATE TABLE aliases ( "
             "id INTEGER PRIMARY KEY, "
             "alias TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(alias, note_id) ON CONFLICT REPLACE "
         ")");
 
@@ -145,7 +145,7 @@ void Database::defineSchema()
             "id INTEGER PRIMARY KEY, "
             "from_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "to_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(from_note_id, to_note_id) ON CONFLICT REPLACE "
         ")");
 
@@ -156,7 +156,7 @@ void Database::defineSchema()
         "CREATE TABLE tags ( "
             "id INTEGER PRIMARY KEY, "
             "name TEXT COLLATE NOCASE UNIQUE NOT NULL, "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000' "
+            "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')) "
         ")");
 
     safeExecQuery(
@@ -164,9 +164,21 @@ void Database::defineSchema()
             "id INTEGER PRIMARY KEY, "
             "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
-            "created_at TEXT NOT NULL DEFAULT '2017-01-01 00:00:00.000', "
+            "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(note_id, tag_id) ON CONFLICT REPLACE "
         ")");
+
+    //Delete tag if it is no longer used by note_tags
+    safeExecQuery(
+        "CREATE TRIGGER after_delete_note_tags_delete_tag "
+        "AFTER DELETE ON note_tags "
+        "BEGIN "
+            "DELETE FROM tags "
+            "WHERE tags.id = OLD.tag_id AND "
+                "NOT EXISTS (SELECT note_tags.tag_id "
+                            "FROM note_tags "
+                            "WHERE note_tags.tag_id = OLD.tag_id); "
+        "END;");
 
     safeExecQuery("CREATE INDEX note_note_id_fk ON note_tags(note_id)");
     safeExecQuery("CREATE INDEX note_tag_id_fk ON note_tags(tag_id)");
@@ -246,31 +258,6 @@ void Database::defineSchema()
                 "VALUES (NEW.id, NEW.alias, NEW.note_id); "
         "END;");
 
-    //Root note
-    safeExecQuery("INSERT INTO notes (id, title, parent_id)"
-        "values (1, 'root', NULL)");
-
     safeExecQuery("INSERT INTO application (name, database_version)"
         "values ('QtSemanticNotes', '1.0')");
-
-    //Test data
-    safeExecQuery("INSERT INTO notes (title, parent_id) values ('1 test', 1)");
-    safeExecQuery("INSERT INTO notes (title, parent_id) values ('2 test', 2)");
-    safeExecQuery("INSERT INTO notes (title, parent_id) values ('1-1 test', 1)");
-    safeExecQuery("INSERT INTO notes (title, parent_id) values ('2-2 test', 4)");
-    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('a b c', 2)");
-    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('c d e', 2)");
-    safeExecQuery("INSERT INTO aliases (alias, note_id) values ('f g h', 2)");
-    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.java')");
-    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.scala')");
-    safeExecQuery("INSERT INTO tags (name) values ('cs.lang.java.variance')");
-    safeExecQuery("INSERT INTO tags (name) values ('cs.netwoking')");
-    safeExecQuery("INSERT INTO tags (name) values ('csgo.weapons')");
-    safeExecQuery("INSERT INTO tags (name) values ('tag')");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (2, 1)");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (4, 2)");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (3, 3)");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 4)");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 5)");
-    safeExecQuery("INSERT INTO note_tags (note_id, tag_id) values (5, 5)");
 }

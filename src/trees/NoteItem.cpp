@@ -4,15 +4,20 @@ NoteItem::NoteItem(shared_ptr<Note> value)
     : value(move(value))
 {}
 
-void NoteItem::addChild(unique_ptr<NoteItem> && item)
+NoteItem::~NoteItem()
 {
-    children.append(move(item));
+    qDeleteAll(children);
+}
+
+void NoteItem::addChild(NoteItem* item)
+{
+    children.append(item);
     item->parent = this;
 }
 
-void NoteItem::addChildAndUpdateNoteParent(unique_ptr<NoteItem> && item)
+void NoteItem::addChildAndUpdateNoteParent(NoteItem* item)
 {
-    addChild(move(item));
+    addChild(item);
     uint id = this->getValue()->getId();
     auto note = item->getValue();
     note->setParentId(id);
@@ -22,12 +27,7 @@ void NoteItem::addChildAndUpdateNoteParent(unique_ptr<NoteItem> && item)
 int NoteItem::childNumber() const
 {
     if (parent) {
-        auto it = std::find_if(parent->children.begin(),
-                               parent->children.end(),
-                               [this](auto item){
-            return item.get() == this;
-        });
-        return std::distance(parent->children.begin(), it);
+        return parent->children.indexOf(const_cast<NoteItem*>(this));
     } else {
         return 0;
     }
@@ -38,11 +38,6 @@ int NoteItem::childCount() const
     return children.count();
 }
 
-//unique_ptr<NoteItem> NoteItem::takeAt(const int& index)
-//{
-//    return children.takeAt(index);
-//}
-
 void NoteItem::removeChild(const int& index)
 {
     children.removeAt(index);
@@ -50,7 +45,7 @@ void NoteItem::removeChild(const int& index)
 
 NoteItem* NoteItem::getChild(const int& index) const
 {
-    return children.at(index).get();
+    return children.at(index);
 }
 
 NoteItem* NoteItem::getParent() const

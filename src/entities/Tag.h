@@ -40,9 +40,9 @@ public:
     Tag(Tag&& other) noexcept = delete;
     Tag & operator=(Tag&& other) noexcept = delete;
 
-    static void addNoteTags(const Note* note, const Tag* tag);
+    static void addNoteTag(const Note* note, const Tag* tag);
+
     static void deleteTagAndSubtags(const QString& fulltag);
-    static void deleteTagIfNotUsed(const Id& id);
 
 private:
     Tag(const Id& id,

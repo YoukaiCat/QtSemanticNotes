@@ -9,7 +9,7 @@
 
 using std::make_unique;
 
-inline Tag::Tag(const Id& id,
+Tag::Tag(const Id& id,
                 const QString& name,
                 const QDateTime& createdAt)
     : id(id),
@@ -60,7 +60,7 @@ optional<shared_ptr<Tag> > Tag::getByName(const QString& name)
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        unique_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         return tag;
@@ -132,7 +132,7 @@ void Tag::remove()
     Database::safeExecPreparedQuery(q);
 }
 
-void Tag::addNoteTags(const Note* note, const Tag* tag)
+void Tag::addNoteTag(const Note* note, const Tag* tag)
 {
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
@@ -156,21 +156,4 @@ void Tag::deleteTagAndSubtags(const QString& fulltag)
     q.bindValue(":name", fulltag);
     q.bindValue(":like_name", fulltag + '.');
     Database::safeExecPreparedQuery(q);
-}
-
-void Tag::deleteTagIfNotUsed(const Id& id)
-{
-    QSqlQuery countChildren;
-    countChildren.prepare("SELECT count(*) FROM note_tags "
-                          "WHERE tag_id = :tag_id");
-    countChildren.bindValue(":tag_id", id);
-    Database::safeExecPreparedQuery(countChildren);
-
-    if(countChildren.value(0).toUInt() == 0) {
-        QSqlQuery q;
-        q.prepare("DELETE FROM tags "
-                  "WHERE id = :id");
-        q.bindValue(":id", id);
-        Database::safeExecPreparedQuery(q);
-    }
 }
