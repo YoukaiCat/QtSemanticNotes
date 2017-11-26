@@ -5,6 +5,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QLocale>
+#include <QRegularExpression>
 
 #include <QDebug>
 
@@ -255,8 +256,9 @@ QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
          Id id = q.value(0).toUInt();
          QString title = q.value(1).toString();
          QString casefoldTitle = QLocale::system().toLower(title);
-         titleToId.insert(casefoldTitle, id);
-         possibleLinksOrdered.append(casefoldTitle);
+         QString escapedTitle = QRegularExpression::escape(casefoldTitle);
+         titleToId.insert(escapedTitle, id);
+         possibleLinksOrdered.append(escapedTitle);
     }
     return qMakePair(titleToId, possibleLinksOrdered.join('|'));
 }
