@@ -1,0 +1,41 @@
+version: 0.2.0.{build}
+
+image: Visual Studio 2017
+
+shallow_clone: true
+clone_depth: 1
+
+environment:
+  matrix:
+  - name: win64
+    platform: x64
+    QTDIR: C:\Qt\5.9.2\msvc2017_64
+
+configuration: Release
+
+install:
+  - set PATH=%PATH%;%QTDIR%\bin;C:\Qt\Tools\QtCreator\bin;C:\Program Files (x86)\Microsoft Visual Studio 15.0\VC\bin;C:\Qt\5.9.2\msvc2017_64\bin;
+
+build_script:
+  - qbs setup-toolchains --detect
+  - qbs setup-qt C:\Qt\5.9.2\msvc2017_64\bin\qmake.exe qt5
+  - qbs config profiles.qt5.baseProfile MSVC2017-x86_x64
+  - qbs build profile:qt5 release
+  - jom
+
+artifacts:
+  - path: QtSemanticNotes\release\package
+    name: QtSemanticNotes-$(APPVEYOR_BUILD_VERSION)-win64
+    type: zip
+
+deploy:
+  description: ''
+  provider: GitHub
+  auth_token:
+    secure: f1qLXI72FZwkMS6SHE+dBvV4N9t3AZzUOpxexMXs2h79b3mVqTgZ/1Mw3x/L+rSj
+  artifact: QtSemanticNotes-$(APPVEYOR_BUILD_VERSION)-win64
+  draft: false
+  prerelease: true
+  on:
+    branch: master
+    appveyor_repo_tag: true
