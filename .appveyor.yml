@@ -7,25 +7,33 @@ clone_depth: 1
 
 environment:
   matrix:
-  - name: win64
-    platform: x64
-    QTDIR: C:\Qt\5.9.2\msvc2017_64
+  - name: x86-64-VS
+    qt: C:\Qt\5.9.2\msvc2017_64
+    toolchain: MSVC2017-x86_x64
+    targetpath: .\release\install-root\
 
 configuration: Release
 
-install:
-  - set PATH=%PATH%;%QTDIR%\bin;C:\Qt\Tools\QtCreator\bin;C:\Program Files (x86)\Microsoft Visual Studio 15.0\VC\bin;C:\Qt\5.9.2\msvc2017_64\bin;
+init:
+  - set PATH=%PATH%;%QT%\bin;C:\Qt\Tools\QtCreator\bin;
+  - set VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC
+
+before_build:
+  - qbs setup-toolchains --detect
+  - qbs setup-qt %qt%\bin\qmake.exe qt
+  - qbs config profiles.qt.baseProfile %toolchain%
 
 build_script:
-  - qbs setup-toolchains --detect
-  - qbs setup-qt C:\Qt\5.9.2\msvc2017_64\bin\qmake.exe qt5
-  - qbs config profiles.qt5.baseProfile MSVC2017-x86_x64
-  - qbs build profile:qt5 release
-  - jom
+  - qbs build profile:qt release
+  - qbs install profile:qt release
+
+after_build:
+  - windeployqt --release --no-opengl-sw --no-system-d3d-compiler --no-translations --list relative %targetpath%
+  - 7z a QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%.zip %targetpath%
 
 artifacts:
-  - path: QtSemanticNotes\release\package
-    name: QtSemanticNotes-$(APPVEYOR_BUILD_VERSION)-win64
+  - path: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%.zip
+    name: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%
     type: zip
 
 deploy:
@@ -33,7 +41,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: f1qLXI72FZwkMS6SHE+dBvV4N9t3AZzUOpxexMXs2h79b3mVqTgZ/1Mw3x/L+rSj
-  artifact: QtSemanticNotes-$(APPVEYOR_BUILD_VERSION)-win64
+  artifact: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%
   draft: false
   prerelease: true
   on:
