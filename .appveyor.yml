@@ -1,4 +1,4 @@
-version: 0.2.1.{build}
+version: 0.2.1-{build}
 
 image: Visual Studio 2017
 
@@ -10,7 +10,8 @@ environment:
   - name: x86-64-VS
     qt: C:\Qt\5.9.2\msvc2017_64
     toolchain: MSVC2017-x86_x64
-    targetpath: .\release\install-root\
+    installpath: .\release\install-root\
+    artifactname: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%
 
 configuration: Release
 
@@ -24,26 +25,30 @@ before_build:
   - qbs config profiles.qt.baseProfile %toolchain%
 
 build_script:
-  - qbs build profile:qt release
-  - qbs install profile:qt release
+  - qbs build profile:qt release qbs.installDir:%artifactname%
 
 after_build:
-  - windeployqt --release --no-opengl-sw --no-system-d3d-compiler --no-translations --list relative %targetpath%
-  - 7z a QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%.zip %targetpath%
+  - qbs install profile:qt release qbs.installDir:%artifactname%
+  - windeployqt --release --no-opengl-sw --no-system-d3d-compiler --no-translations --list relative %installpath%\%artifactname%
+  - 7z a -tzip %artifactname%.zip %installpath%\%artifactname%
 
 artifacts:
-  - path: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%.zip
-    name: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%
+  - path: "%artifactname%.zip"
+    name: "%artifactname%"
     type: zip
+
+branches:
+  only:
+    - master
+    - /v\d\.\d\.\d/
 
 deploy:
   description: ''
   provider: GitHub
   auth_token:
-    secure: f1qLXI72FZwkMS6SHE+dBvV4N9t3AZzUOpxexMXs2h79b3mVqTgZ/1Mw3x/L+rSj
-  artifact: QtSemanticNotes-%APPVEYOR_BUILD_VERSION%-%name%
+    secure: 1QXcIVsmMpHzP0dugtVCQ5LeAKVLIkAo4HHDf28FD4y91XcAzCke9HqDpvLgzuy5
+  artifact: "%artifactname%"
   draft: false
   prerelease: true
   on:
-    branch: master
     appveyor_repo_tag: true
