@@ -10,7 +10,7 @@ Product {
 
     files: ["src/**/*", "resources/**/*"]
 
-    version: "0.2.0"
+    version: "0.2.1"
 
     cpp.cxxLanguageVersion: "c++17"
     cpp.defines: [
