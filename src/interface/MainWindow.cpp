@@ -583,9 +583,6 @@ void MainWindow::on_treeViewNotes_customContextMenuRequested(const QPoint& point
             addNote();
         });
     } else {
-        notesContextMenu.addAction(QIcon::fromTheme("document-open"), tr("Open"), [this, selectedIndex](){
-            notesManager.openNote(selectedIndex);
-        });
         notesContextMenu.addAction(QIcon::fromTheme("document-new"), tr("Add Subnote"), [this, selectedIndex](){
             addSubnoteAtIndex(selectedIndex);
         });
