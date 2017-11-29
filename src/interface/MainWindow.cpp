@@ -309,8 +309,10 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
 void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 {
-    Q_UNUSED(reason)
-    isHidden() ? showNormal() : hide();
+    if(reason == QSystemTrayIcon::Trigger) {
+        Q_UNUSED(reason)
+        isHidden() ? showNormal() : hide();
+    }
 }
 
 void MainWindow::showCriticalErrorAndQuit(const QString& error)
