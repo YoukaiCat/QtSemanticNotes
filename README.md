@@ -16,5 +16,5 @@ Appveyor CI status (Windows builds): [![Build status](https://ci.appveyor.com/ap
 ## Licensing
 QtSemanticNotes licensed under GPL 3  
 App uses an icon [Notebook](https://thenounproject.com/search/?q=notebook&i=1278726) by [Krishna](https://thenounproject.com/krishanayuga/) from the Noun Project, licensed under a [Creative Commons Attribution 3.0](https://creativecommons.org/licenses/by/3.0/us/)  
-App uses action [icons from KDE Breeze theme](https://github.com/KDE/breeze-icons) by Uri Herrera, licenced under LGPL 3 (see resources/themes/breeze/COPYING-ICONS and resources/themes/breeze/COPYING.LIB)
-
+App uses action [icons from KDE Breeze theme](https://github.com/KDE/breeze-icons) by Uri Herrera, licensed under LGPL 3 (see resources/themes/breeze/COPYING-ICONS and resources/themes/breeze/COPYING.LIB)  
+App uses [installer scripts](https://github.com/Skycoder42/QtIFW-Advanced-Setup) by Felix Barz, licensed under 3-Clause BSD License (see installer/LICENSE)

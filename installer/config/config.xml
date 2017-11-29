@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>QtSemanticNotes</Name>
+    <Version>0.2.1</Version>
+    <Title>QtSemanticNotes</Title>
+    <Publisher>Vladislav Mileshkin</Publisher>
+    <ProductUrl>https://github.com/YoukaiCat/QtSemanticNotes</ProductUrl>
+    <StartMenuDir>QtSemanticNotes</StartMenuDir>
+    <TargetDir>QtSemanticNotes</TargetDir>
+    <RunProgram>QtSemanticNotes</RunProgram>
+    <InstallerApplicationIcon>../../resources/icon</InstallerApplicationIcon>
+    <AllowSpaceInPath>true</AllowSpaceInPath>
+    <AllowNonAsciiCharacters>true</AllowNonAsciiCharacters>
+    <ControlScript>controller.js</ControlScript>
+</Installer>

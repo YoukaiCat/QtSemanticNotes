@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>QtSemanticNotes</DisplayName>
+    <Description>Installs the Application</Description>
+    <Version>0.2.1</Version>
+    <ReleaseDate>2017-11-28</ReleaseDate>
+    <Licenses>
+        <License name="GNU General Public License Version 3" file="COPYING.txt" />
+    </Licenses>
+    <ForcedInstallation>true</ForcedInstallation>
+    <Default>true</Default>
+    <Script>installscript.qs</Script>
+    <UserInterfaces>
+        <UserInterface>ShortcutPage.ui</UserInterface>
+        <UserInterface>UserPage.ui</UserInterface>
+    </UserInterfaces>
+</Package>

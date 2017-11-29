@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Microsoft Visual C++ Redistributable</DisplayName>
+    <Description>Installs the Visual C++ redistributables</Description>
+    <Version>14.11.25325</Version>
+    <ReleaseDate>2017-11-28</ReleaseDate>
+    <SortingPriority>-10</SortingPriority>
+    <Default>true</Default>
+    <Script>installscript.qs</Script>
+    <UserInterfaces>
+        <UserInterface>page.ui</UserInterface>
+    </UserInterfaces>
+</Package>

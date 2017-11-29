@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/icons">
+    <qresource prefix="\icons">
         <file>themes/breeze/actions/acrobat.svg</file>
         <file>themes/breeze/actions/address-book-new.svg</file>
         <file>themes/breeze/actions/align-horizontal-bottom-out.svg</file>

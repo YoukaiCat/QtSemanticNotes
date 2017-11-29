@@ -2,6 +2,7 @@ import qbs
 
 Product {
     type: ["application"]
+    consoleApplication: false
 
     Depends {
         name: "Qt"
