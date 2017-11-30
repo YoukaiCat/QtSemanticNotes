@@ -11,11 +11,7 @@ TagsManager::TagsManager(QObject* parent)
 void TagsManager::setup(QTreeView * view)
 {
     this->view = view;
-
     loadTags();
-
-    connect(view->selectionModel(), &QItemSelectionModel::selectionChanged,
-            this, &TagsManager::onSelectionChange);
 }
 
 void TagsManager::removeTag(const QModelIndex& index)
@@ -93,4 +89,6 @@ unique_ptr<TagTreeModel> TagsManager::createTreeModel(unique_ptr<TagItem> && roo
 void TagsManager::setupTreeView(QTreeView& view, TagTreeModel* model)
 {
     view.setModel(model);
+    connect(view.selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &TagsManager::onSelectionChange);
 }
