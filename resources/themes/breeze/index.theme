@@ -1,0 +1,17 @@
+[Icon Theme]
+Name=Breeze
+Comment=Icon theme
+Inherits=hicolor,default
+Directories=actions
+
+[actions]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256
+Context=Actions
+
+DisplayDepth=32
+Example=folder
+FollowsColorScheme=true
+KDE-Extensions=.svg

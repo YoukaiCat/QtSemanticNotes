@@ -18,6 +18,11 @@ MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+#if !(defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD) || defined(Q_OS_OPENBSD) || defined(Q_OS_NETBSD) || defined(Q_OS_UNIX))
+    QIcon::setThemeSearchPaths(QIcon::themeSearchPaths() << QString(":/icons/themes"));
+    QIcon::setThemeName("breeze");
+#endif
+
     ui->setupUi(this);
     setWindowIcon(QIcon(":/icons/AppIcon"));
     setupTrayIcon();

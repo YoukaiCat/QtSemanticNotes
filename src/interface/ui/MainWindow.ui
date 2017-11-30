@@ -785,8 +785,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="show-menu">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="view-list-tree"/>
    </property>
    <property name="text">
     <string>Show notes tree</string>
@@ -800,8 +799,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="show-menu">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="view-list-tree"/>
    </property>
    <property name="text">
     <string>Show tags tree</string>
@@ -815,8 +813,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="show-menu">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="application-menu"/>
    </property>
    <property name="text">
     <string>Show note aliases, links and tags</string>
@@ -880,8 +877,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="preview">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-edit-sign"/>
    </property>
    <property name="text">
     <string>View/Edit mode</string>

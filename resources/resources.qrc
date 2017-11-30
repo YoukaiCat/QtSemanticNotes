@@ -1,55 +1,51 @@
 <RCC>
     <qresource prefix="/icons">
-        <file alias="application-exit">themes/breeze/actions/application-exit.svg</file>
-        <file alias="application-menu">themes/breeze/actions/application-menu.svg</file>
-        <file alias="configure-shortcuts">themes/breeze/actions/configure-shortcuts.svg</file>
-        <file alias="configure">themes/breeze/actions/configure.svg</file>
-        <file alias="dialog-cancel">themes/breeze/actions/dialog-cancel.svg</file>
-        <file alias="dialog-messages">themes/breeze/actions/dialog-messages.svg</file>
-        <file alias="dialog-ok-apply">themes/breeze/actions/dialog-ok-apply.svg</file>
-        <file alias="document-close">themes/breeze/actions/document-close.svg</file>
-        <file alias="document-edit">themes/breeze/actions/document-edit.svg</file>
-        <file alias="document-export">themes/breeze/actions/document-export.svg</file>
-        <file alias="document-import">themes/breeze/actions/document-import.svg</file>
-        <file alias="document-new-from-template">themes/breeze/actions/document-new-from-template.svg</file>
-        <file alias="document-new">themes/breeze/actions/document-new.svg</file>
-        <file alias="document-open">themes/breeze/actions/document-open.svg</file>
-        <file alias="document-preview-archive">themes/breeze/actions/document-preview-archive.svg</file>
-        <file alias="document-preview">themes/breeze/actions/document-preview.svg</file>
-        <file alias="document-revert">themes/breeze/actions/document-revert.svg</file>
-        <file alias="document-save-all">themes/breeze/actions/document-save-all.svg</file>
-        <file alias="document-save-as">themes/breeze/actions/document-save-as.svg</file>
-        <file alias="document-save">themes/breeze/actions/document-save.svg</file>
-        <file alias="document-share">themes/breeze/actions/document-share.svg</file>
-        <file alias="edit-delete">themes/breeze/actions/edit-delete.svg</file>
-        <file alias="edit-redo">themes/breeze/actions/edit-redo.svg</file>
-        <file alias="edit-select">themes/breeze/actions/edit-select.svg</file>
-        <file alias="edit-undo">themes/breeze/actions/edit-undo.svg</file>
-        <file alias="editor">themes/breeze/actions/editor.svg</file>
-        <file alias="folder-new">themes/breeze/actions/folder-new.svg</file>
-        <file alias="folder-sync">themes/breeze/actions/folder-sync.svg</file>
-        <file alias="help-about">themes/breeze/actions/help-about.svg</file>
-        <file alias="help-donate">themes/breeze/actions/help-donate.svg</file>
-        <file alias="help-keybord-shortcuts">themes/breeze/actions/help-keybord-shortcuts.svg</file>
-        <file alias="help-whatsthis">themes/breeze/actions/help-whatsthis.svg</file>
-        <file alias="preview">themes/breeze/actions/preview.svg</file>
-        <file alias="select">themes/breeze/actions/select.svg</file>
-        <file alias="view-filter">themes/breeze/actions/view-filter.svg</file>
-        <file alias="view-group">themes/breeze/actions/view-group.svg</file>
-        <file alias="view-left-close">themes/breeze/actions/view-left-close.svg</file>
-        <file alias="view-list-details">themes/breeze/actions/view-list-details.svg</file>
-        <file alias="view-list-icons">themes/breeze/actions/view-list-icons.svg</file>
-        <file alias="view-list-text">themes/breeze/actions/view-list-text.svg</file>
-        <file alias="view-list-tre">themes/breeze/actions/view-list-tree.svg</file>
-        <file alias="view-preview">themes/breeze/actions/view-preview.svg</file>
-        <file alias="view-refresh">themes/breeze/actions/view-refresh.svg</file>
-        <file alias="view-sort-ascending">themes/breeze/actions/view-sort-ascending.svg</file>
-        <file alias="view-sort-descending">themes/breeze/actions/view-sort-descending.svg</file>
-        <file alias="window-close">themes/breeze/actions/window-close.svg</file>
-        <file alias="draw-arrow-back">themes/breeze/actions/draw-arrow-back.svg</file>
-        <file alias="draw-arrow-down">themes/breeze/actions/draw-arrow-down.svg</file>
-        <file alias="draw-arrow-forward">themes/breeze/actions/draw-arrow-forward.svg</file>
-        <file alias="draw-arrow-up">themes/breeze/actions/draw-arrow-up.svg</file>
+        <file>themes/breeze/actions/application-exit.svg</file>
+        <file>themes/breeze/actions/application-menu.svg</file>
+        <file>themes/breeze/actions/configure-shortcuts.svg</file>
+        <file>themes/breeze/actions/configure.svg</file>
+        <file>themes/breeze/actions/dialog-cancel.svg</file>
+        <file>themes/breeze/actions/dialog-messages.svg</file>
+        <file>themes/breeze/actions/dialog-ok-apply.svg</file>
+        <file>themes/breeze/actions/document-close.svg</file>
+        <file>themes/breeze/actions/document-edit.svg</file>
+        <file>themes/breeze/actions/document-edit-sign.svg</file>
+        <file>themes/breeze/actions/document-export.svg</file>
+        <file>themes/breeze/actions/document-import.svg</file>
+        <file>themes/breeze/actions/document-new-from-template.svg</file>
+        <file>themes/breeze/actions/document-new.svg</file>
+        <file>themes/breeze/actions/document-open.svg</file>
+        <file>themes/breeze/actions/document-preview-archive.svg</file>
+        <file>themes/breeze/actions/document-preview.svg</file>
+        <file>themes/breeze/actions/document-revert.svg</file>
+        <file>themes/breeze/actions/document-save-all.svg</file>
+        <file>themes/breeze/actions/document-save-as.svg</file>
+        <file>themes/breeze/actions/document-save.svg</file>
+        <file>themes/breeze/actions/document-share.svg</file>
+        <file>themes/breeze/actions/edit-delete.svg</file>
+        <file>themes/breeze/actions/edit-redo.svg</file>
+        <file>themes/breeze/actions/edit-select.svg</file>
+        <file>themes/breeze/actions/edit-undo.svg</file>
+        <file>themes/breeze/actions/edit-find.svg</file>
+        <file>themes/breeze/actions/folder-new.svg</file>
+        <file>themes/breeze/actions/folder-sync.svg</file>
+        <file>themes/breeze/actions/help-about.svg</file>
+        <file>themes/breeze/actions/help-whatsthis.svg</file>
+        <file>themes/breeze/actions/view-filter.svg</file>
+        <file>themes/breeze/actions/view-group.svg</file>
+        <file>themes/breeze/actions/view-left-close.svg</file>
+        <file>themes/breeze/actions/view-list-details.svg</file>
+        <file>themes/breeze/actions/view-list-icons.svg</file>
+        <file>themes/breeze/actions/view-list-text.svg</file>
+        <file>themes/breeze/actions/view-list-tree.svg</file>
+        <file>themes/breeze/actions/view-preview.svg</file>
+        <file>themes/breeze/actions/view-refresh.svg</file>
+        <file>themes/breeze/actions/view-sort-ascending.svg</file>
+        <file>themes/breeze/actions/view-sort-descending.svg</file>
+        <file>themes/breeze/actions/window-close.svg</file>
+        <file>themes/breeze/actions/go-previous.svg</file>
+        <file>themes/breeze/actions/go-next.svg</file>
+        <file>themes/breeze/index.theme</file>
         <file alias="AppIcon">Notebook_by_Krishna_Noun_Project_CCBY3.svg</file>
         <file alias="AppIconRasterized">icon.ico</file>
     </qresource>
