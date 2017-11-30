@@ -366,7 +366,6 @@ void MainWindow::enableNoteActions()
 {
     ui->actionAddSubnote->setEnabled(true);
     ui->actionRename->setEnabled(true);
-    ui->actionSave->setEnabled(true);
     ui->actionDeleteNote->setEnabled(true);
 }
 
