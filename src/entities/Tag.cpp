@@ -44,7 +44,7 @@ vector<shared_ptr<Tag>> Tag::getAll()
 
     vector<shared_ptr<Tag>> tags;
     while (q.next()) {
-        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toString(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         tags.push_back(move(tag));
@@ -57,11 +57,11 @@ optional<shared_ptr<Tag>> Tag::getById(const Id& id)
     QSqlQuery q;
     q.prepare("SELECT id, name, created_at FROM tags "
               "WHERE id = :id");
-    q.bindValue(":id", id);
+    q.bindValue(":id", id.toString());
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toString(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         return tag;
@@ -79,7 +79,7 @@ optional<shared_ptr<Tag> > Tag::getByName(const QString& name)
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        shared_ptr<Tag> tag(new Tag(q.value(0).toUInt(),
+        shared_ptr<Tag> tag(new Tag(q.value(0).toString(),
                                     q.value(1).toString(),
                                     q.value(2).toDateTime()));
         return tag;
@@ -111,7 +111,7 @@ QDateTime Tag::getCreatedAt() const
 QString Tag::toString() const
 {
     return QString("id: %1, name: %2, created_at: %3")
-            .arg(QString::number(id))
+            .arg(id.toString())
             .arg(name)
             .arg(createdAt.toString());
 }
@@ -121,14 +121,17 @@ shared_ptr<Tag> Tag::create(const QString& name)
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
 
+    Id id;
+
     QSqlQuery insertTagQuery;
-    insertTagQuery.prepare("INSERT INTO tags (name, created_at) "
-                           "VALUES (:name, :created_at)");
+    insertTagQuery.prepare("INSERT INTO tags (id, name, created_at) "
+                           "VALUES (:id, :name, :created_at)");
+    insertTagQuery.bindValue(":id", id.toString());
     insertTagQuery.bindValue(":name", name);
     insertTagQuery.bindValue(":created_at", now_s);
     Database::safeExecPreparedQuery(insertTagQuery);
 
-    unique_ptr<Tag> tag(new Tag(insertTagQuery.lastInsertId().toUInt(), name, now));
+    unique_ptr<Tag> tag(new Tag(id, name, now));
     return tag;
 }
 
@@ -147,7 +150,7 @@ void Tag::remove()
     QSqlQuery q;
     q.prepare("DELETE FROM tags "
               "WHERE id = :id");
-    q.bindValue(":id", id);
+    q.bindValue(":id", id.toString());
     Database::safeExecPreparedQuery(q);
 }
 
@@ -157,10 +160,11 @@ void Tag::addNoteTag(const Note* note, const Tag* tag)
     QString now_s = now.toString(Qt::ISODateWithMs);
 
     QSqlQuery insertNoteTagsQuery;
-    insertNoteTagsQuery.prepare("INSERT INTO note_tags (note_id, tag_id, created_at) "
-                                "VALUES (:note_id, :tag_id, :created_at)");
-    insertNoteTagsQuery.bindValue(":note_id", note->getId());
-    insertNoteTagsQuery.bindValue(":tag_id", tag->getId());
+    insertNoteTagsQuery.prepare("INSERT INTO note_tags (id, note_id, tag_id, created_at) "
+                                "VALUES (:id, :note_id, :tag_id, :created_at)");
+    insertNoteTagsQuery.bindValue(":id", Id().toString());
+    insertNoteTagsQuery.bindValue(":note_id", note->getId().toString());
+    insertNoteTagsQuery.bindValue(":tag_id", tag->getId().toString());
     insertNoteTagsQuery.bindValue(":created_at", now_s);
     Database::safeExecPreparedQuery(insertNoteTagsQuery);
 }

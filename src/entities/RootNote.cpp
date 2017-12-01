@@ -32,19 +32,19 @@ RootNote::RootNote(const Id& id,
                           const QString& title,
                           const QDateTime& createdAt,
                           const QDateTime& updatedAt)
-    : Note(id, title, createdAt, updatedAt, 0)
+    : Note(id, title, createdAt, updatedAt, Id())
 {}
 
 shared_ptr<RootNote> RootNote::getRootNote()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at "
-              "FROM notes WHERE id = 1");
+              "FROM notes WHERE parent_id IS NULL");
     Database::safeExecPreparedQuery(q);
     q.next();
 
     shared_ptr<RootNote> note(new RootNote(
-                                  q.value(0).toUInt(),
+                                  q.value(0).toString(),
                                   q.value(1).toString(),
                                   q.value(2).toDateTime(),
                                   q.value(3).toDateTime()));
@@ -66,7 +66,7 @@ QString RootNote::toString() const
 {
     return QString("id: %1, title: %2, content: %3, "
                    "created_at: %4, updated_at: %5 ")
-            .arg(QString::number(id))
+            .arg(id.toString())
             .arg(title)
             .arg(content.value_or("(not loaded)"))
             .arg(createdAt.toString())

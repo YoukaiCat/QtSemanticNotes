@@ -20,6 +20,19 @@
 #ifndef ID_H
 #define ID_H
 
-using Id = unsigned int;
+#include <QUuid>
+
+class Id
+{
+public:
+    Id() : id(QUuid::createUuid().toString().mid(1, 36)) { }
+    Id(const QString& string) : id(string) { }
+    inline QString toString() const
+    {
+        return id;
+    }
+private:
+    QString id;
+};
 
 #endif // ID_H

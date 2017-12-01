@@ -72,7 +72,7 @@ private:
 
     QList<Id> findLinks(const QString& text);
 
-    QPair<QHash<QString,Id>,QString> possibleLinks;
+    QPair<QHash<QString, QString>, QString> possibleLinks;
 };
 
 #endif // LINKSMANAGER_H

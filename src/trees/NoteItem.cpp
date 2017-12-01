@@ -37,7 +37,7 @@ void NoteItem::addChild(NoteItem* item)
 void NoteItem::addChildAndUpdateNoteParent(NoteItem* item)
 {
     addChild(item);
-    uint id = this->getValue()->getId();
+    Id id = this->getValue()->getId();
     auto note = item->getValue();
     note->setParentId(id);
     note->update();

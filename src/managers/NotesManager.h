@@ -78,9 +78,9 @@ private slots:
 
 private:
     void createItemsAndAddToMap(const vector<shared_ptr<Note>>& notes,
-                                QHash<Id, NoteItem*>& itemByNoteId);
+                                QHash<QString, NoteItem*>& itemByNoteId);
     void addChildren(const vector<shared_ptr<Note>>& notes,
-                     const QHash<Id, NoteItem*>& itemByNoteId);
+                     const QHash<QString, NoteItem*>& itemByNoteId);
     void makeTree(NoteItem* rootItem,
                   const vector<shared_ptr<Note>>& notes);
     unique_ptr<NoteItem> createTree();

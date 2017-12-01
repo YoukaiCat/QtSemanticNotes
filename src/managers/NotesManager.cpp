@@ -130,7 +130,7 @@ void NotesManager::openNote(const QModelIndex& index)
 
 void NotesManager::openNote(const QUrl& url)
 {
-    Id id = url.query().toUInt();
+    Id id = url.query();
     selectNoteInTreeById(id);
 }
 
@@ -184,22 +184,22 @@ void NotesManager::onSelectionChange()
 }
 
 void NotesManager::createItemsAndAddToMap(const vector<shared_ptr<Note>>& notes,
-                                          QHash<Id, NoteItem*>& itemByNoteId)
+                                          QHash<QString, NoteItem*>& itemByNoteId)
 {
     for(auto& note : notes) {
         auto item = new NoteItem(note);
-        itemByNoteId.insert(note->getId(), item);
+        itemByNoteId.insert(note->getId().toString(), item);
     }
 }
 
 void NotesManager::addChildren(const vector<shared_ptr<Note>>& notes,
-                               const QHash<Id, NoteItem*>& itemByNoteId)
+                               const QHash<QString, NoteItem*>& itemByNoteId)
 {
     for(auto& note : notes) {
         auto noteId = note->getId();
         auto parentId = note->getParentId();
-        auto item = itemByNoteId[noteId];
-        auto parent = itemByNoteId[parentId];
+        auto item = itemByNoteId[noteId.toString()];
+        auto parent = itemByNoteId[parentId.toString()];
         parent->addChild(item);
     }
 }
@@ -207,8 +207,8 @@ void NotesManager::addChildren(const vector<shared_ptr<Note>>& notes,
 void NotesManager::makeTree(NoteItem* rootItem,
                             const vector<shared_ptr<Note>>& notes)
 {
-    QHash<Id, NoteItem*> itemByNoteId;
-    itemByNoteId.insert(rootItem->getValue()->getId(), rootItem);
+    QHash<QString, NoteItem*> itemByNoteId;
+    itemByNoteId.insert(rootItem->getValue()->getId().toString(), rootItem);
     createItemsAndAddToMap(notes, itemByNoteId);
     addChildren(notes, itemByNoteId);
 }

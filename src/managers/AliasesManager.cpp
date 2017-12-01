@@ -50,7 +50,7 @@ void AliasesManager::clearModel()
 
 void AliasesManager::filterModel(shared_ptr<Note> note)
 {
-    QString idFilter = QString("note_id = %1").arg(note->getId());
+    QString idFilter = QString("note_id = '%1'").arg(note->getId().toString());
     model->setFilter(idFilter);
     selectFromModel();
 }
@@ -73,7 +73,7 @@ QString AliasesManager::aliasByIndex(const QModelIndex& index)
 
 Id AliasesManager::noteIdByIndex(const QModelIndex& index)
 {
-    return model->record(index.row()).value(2).toUInt();
+    return model->record(index.row()).value(2).toString();
 }
 
 void AliasesManager::removeAlias(const QModelIndex& index)

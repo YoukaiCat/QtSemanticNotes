@@ -31,10 +31,10 @@
 using std::make_unique;
 
 Note::Note(const Id& id,
-                  const QString& title,
-                  const QDateTime& createdAt,
-                  const QDateTime& updatedAt,
-                  const Id& parentId)
+           const QString& title,
+           const QDateTime& createdAt,
+           const QDateTime& updatedAt,
+           const Id& parentId)
     : id(id),
       title(title),
       createdAt(createdAt),
@@ -43,11 +43,11 @@ Note::Note(const Id& id,
 {}
 
 Note::Note(const Id& id,
-                  const QString& title,
-                  const optional<QString>& content,
-                  const QDateTime& createdAt,
-                  const QDateTime& updatedAt,
-                  const Id& parentId)
+           const QString& title,
+           const optional<QString>& content,
+           const QDateTime& createdAt,
+           const QDateTime& updatedAt,
+           const Id& parentId)
     : id(id),
       title(title),
       content(content),
@@ -60,16 +60,16 @@ vector<shared_ptr<Note>> Note::getAll()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes "
-              "WHERE NOT id = 1");
+              "WHERE parent_id NOT NULL");
     Database::safeExecPreparedQuery(q);
 
     vector<shared_ptr<Note>> notes;
     while (q.next()) {
-        shared_ptr<Note> note(new Note(q.value(0).toUInt(),
+        shared_ptr<Note> note(new Note(q.value(0).toString(),
                                        q.value(1).toString(),
                                        q.value(2).toDateTime(),
                                        q.value(3).toDateTime(),
-                                       q.value(4).toUInt()));
+                                       q.value(4).toString()));
         notes.push_back(move(note));
     }
     return notes;
@@ -79,16 +79,16 @@ optional<shared_ptr<Note>> Note::getById(const Id& id)
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, created_at, updated_at, parent_id FROM notes"
-              "WHERE id = :id AND NOT id = 1");
-    q.bindValue(":id", id);
+              "WHERE id = :id AND parent_id NOT NULL");
+    q.bindValue(":id", id.toString());
     Database::safeExecPreparedQuery(q);
 
     if (q.next()) {
-        shared_ptr<Note> note(new Note(q.value(0).toUInt(),
+        shared_ptr<Note> note(new Note(q.value(0).toString(),
                                        q.value(1).toString(),
                                        q.value(2).toDateTime(),
                                        q.value(3).toDateTime(),
-                                       q.value(4).toUInt()));
+                                       q.value(4).toString()));
         return note;
     } else {
         return {};
@@ -122,6 +122,7 @@ void Note::setTitle(const QString& value)
     title = value;
 }
 
+//Lazy load content
 QString Note::getContent()
 {
     if(content.has_value()) {
@@ -130,7 +131,7 @@ QString Note::getContent()
         QSqlQuery q;
         q.prepare("SELECT content FROM notes "
                   "WHERE id = :id");
-        q.bindValue(":id", id);
+        q.bindValue(":id", id.toString());
         Database::safeExecPreparedQuery(q);
         q.next();
 
@@ -168,12 +169,12 @@ QString Note::toString() const
 {
     return QString("id: %1, title: %2, content: %3, "
                    "created_at: %4, updated_at: %5, parent_id: %6")
-            .arg(QString::number(id))
+            .arg(id.toString())
             .arg(title)
             .arg(content.value_or("(not loaded)"))
             .arg(createdAt.toString())
             .arg(updatedAt.toString())
-            .arg(parentId);
+            .arg(parentId.toString());
 }
 
 shared_ptr<Note> Note::create(const QString& title,
@@ -183,17 +184,20 @@ shared_ptr<Note> Note::create(const QString& title,
     QDateTime now = QDateTime::currentDateTime();
     QString now_s = now.toString(Qt::ISODateWithMs);
 
+    Id id;
+
     QSqlQuery insertNotesQuery;
-    insertNotesQuery.prepare("INSERT INTO notes (title, content, created_at, updated_at, parent_id) "
-                             "VALUES (:title, :content, :created_at, :updated_at, :parent_id)");
+    insertNotesQuery.prepare("INSERT INTO notes (id, title, content, parent_id) "
+                             "VALUES (:id, :title, :content, :parent_id)");
+    insertNotesQuery.bindValue(":id", id.toString());
     insertNotesQuery.bindValue(":title", title);
     insertNotesQuery.bindValue(":content", content);
     insertNotesQuery.bindValue(":created_at", now_s);
     insertNotesQuery.bindValue(":updated_at", now_s);
-    insertNotesQuery.bindValue(":parent_id", parentId);
+    insertNotesQuery.bindValue(":parent_id", parentId.toString());
     Database::safeExecPreparedQuery(insertNotesQuery);
 
-    shared_ptr<Note> note(new Note(insertNotesQuery.lastInsertId().toUInt(), title, content, now, now, parentId));
+    shared_ptr<Note> note(new Note(id, title, content, now, now, parentId));
     return note;
 }
 
@@ -210,21 +214,21 @@ void Note::update()
                                  "updated_at = :updated_at, "
                                  "parent_id = :parent_id "
                                  "WHERE id = :id");
-        updateNotesQuery.bindValue(":id", id);
+        updateNotesQuery.bindValue(":id", id.toString());
         updateNotesQuery.bindValue(":title", title);
         updateNotesQuery.bindValue(":content", content.value());
         updateNotesQuery.bindValue(":updated_at", now_s);
-        updateNotesQuery.bindValue(":parent_id", parentId);
+        updateNotesQuery.bindValue(":parent_id", parentId.toString());
     } else {
         updateNotesQuery.prepare("UPDATE notes "
                                  "SET title = :title, "
                                  "updated_at = :updated_at, "
                                  "parent_id = :parent_id "
                                  "WHERE id = :id");
-        updateNotesQuery.bindValue(":id", id);
+        updateNotesQuery.bindValue(":id", id.toString());
         updateNotesQuery.bindValue(":title", title);
         updateNotesQuery.bindValue(":updated_at", now_s);
-        updateNotesQuery.bindValue(":parent_id", parentId);
+        updateNotesQuery.bindValue(":parent_id", parentId.toString());
     }
     Database::safeExecPreparedQuery(updateNotesQuery);
 
@@ -236,7 +240,7 @@ void Note::remove()
     QSqlQuery q;
     q.prepare("DELETE FROM notes "
               "WHERE id = :id");
-    q.bindValue(":id", id);
+    q.bindValue(":id", id.toString());
     Database::safeExecPreparedQuery(q);
     deleted = true;
 }
@@ -246,21 +250,25 @@ bool Note::isDeleted()
     return deleted;
 }
 
-void Note::addNoteAlias(const Note* note, const QString& alias)
+QString Note::currentTime()
 {
     QDateTime now = QDateTime::currentDateTime();
-    QString now_s = now.toString(Qt::ISODateWithMs);
+    return now.toString(Qt::ISODateWithMs);
+}
 
+void Note::addNoteAlias(const Note* note, const QString& alias)
+{
     QSqlQuery insertNoteAlias;
-    insertNoteAlias.prepare("INSERT INTO aliases (alias, note_id, created_at) "
-                             "VALUES (:alias, :note_id, :created_at)");
+    insertNoteAlias.prepare("INSERT INTO aliases (id, alias, note_id, created_at) "
+                            "VALUES (:id, :alias, :note_id, :created_at)");
+    insertNoteAlias.bindValue(":id", Id().toString());
     insertNoteAlias.bindValue(":alias", alias);
-    insertNoteAlias.bindValue(":note_id", note->getId());
-    insertNoteAlias.bindValue(":created_at", now_s);
+    insertNoteAlias.bindValue(":note_id", note->getId().toString());
+    insertNoteAlias.bindValue(":created_at", currentTime());
     Database::safeExecPreparedQuery(insertNoteAlias);
 }
 
-QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
+QPair<QHash<QString,QString>,QString> Note::getPossibleLinks()
 {
     QSqlQuery q;
     q.prepare("SELECT id, title, length(title) FROM notes "
@@ -269,40 +277,37 @@ QPair<QHash<QString,Id>,QString> Note::getPossibleLinks()
               "ORDER BY 3 DESC");
     Database::safeExecPreparedQuery(q);
 
-    QHash<QString,Id> titleToId;
+    QHash<QString,QString> titleToId;
     QStringList possibleLinksOrdered;
     while(q.next()) {
-         Id id = q.value(0).toUInt();
-         QString title = q.value(1).toString();
-         QString casefoldTitle = QLocale::system().toLower(title);
-         QString escapedTitle = QRegularExpression::escape(casefoldTitle);
-         titleToId.insert(escapedTitle, id);
-         possibleLinksOrdered.append(escapedTitle);
+        Id id = q.value(0).toString();
+        QString title = q.value(1).toString();
+        QString casefoldTitle = QLocale::system().toLower(title);
+        QString escapedTitle = QRegularExpression::escape(casefoldTitle);
+        titleToId.insert(escapedTitle, id.toString());
+        possibleLinksOrdered.append(escapedTitle);
     }
     return qMakePair(titleToId, possibleLinksOrdered.join('|'));
 }
 
 void Note::addNoteLink(const Id& noteFrom, const Id& noteTo)
 {
-    QDateTime now = QDateTime::currentDateTime();
-    QString now_s = now.toString(Qt::ISODateWithMs);
-
     QSqlQuery insertNoteAlias;
-    insertNoteAlias.prepare("INSERT INTO links (from_note_id, to_note_id, created_at) "
-                             "VALUES (:from_note_id, :to_note_id, :created_at)");
-    insertNoteAlias.bindValue(":from_note_id", noteFrom);
-    insertNoteAlias.bindValue(":to_note_id", noteTo);
-    insertNoteAlias.bindValue(":created_at", now_s);
+    insertNoteAlias.prepare("INSERT INTO links (id, from_note_id, to_note_id, created_at) "
+                            "VALUES (:id, :from_note_id, :to_note_id, :created_at)");
+    insertNoteAlias.bindValue(":id", Id().toString());
+    insertNoteAlias.bindValue(":from_note_id", noteFrom.toString());
+    insertNoteAlias.bindValue(":to_note_id", noteTo.toString());
+    insertNoteAlias.bindValue(":created_at", currentTime());
     Database::safeExecPreparedQuery(insertNoteAlias);
 }
-
 
 void Note::clearLinksFrom(const Id& noteFrom)
 {
     QSqlQuery q;
     q.prepare("DELETE FROM links "
               "WHERE from_note_id = :from_note_id");
-    q.bindValue(":from_note_id", noteFrom);
+    q.bindValue(":from_note_id", noteFrom.toString());
     Database::safeExecPreparedQuery(q);
 }
 
@@ -311,7 +316,7 @@ void Note::clearLinksTo(const Id& noteTo)
     QSqlQuery q;
     q.prepare("DELETE FROM links "
               "WHERE to_note_id = :to_note_id");
-    q.bindValue(":to_note_id", noteTo);
+    q.bindValue(":to_note_id", noteTo.toString());
     Database::safeExecPreparedQuery(q);
 }
 

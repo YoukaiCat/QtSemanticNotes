@@ -42,7 +42,7 @@ QVariant NoteTreeModel::data(const QModelIndex& index, int role) const
         return itemFromIndex(index)->getValue()->getTitle();
 
     if (role == Qt::UserRole)
-        return itemFromIndex(index)->getValue()->getId();
+        return itemFromIndex(index)->getValue()->getId().toString();
 
     return QVariant();
 }
@@ -277,7 +277,7 @@ void NoteTreeModel::deleteNoteAtIndex(const QModelIndex& index)
 
 optional<QModelIndex> NoteTreeModel::findIndexByNoteId(const Id& id, const QModelIndex& rootIndex)
 {
-    QModelIndexList indexes = match(rootIndex, Qt::UserRole, QVariant(id), 1,
+    QModelIndexList indexes = match(rootIndex, Qt::UserRole, QVariant(id.toString()), 1,
                                     Qt::MatchFlags(Qt::MatchExactly | Qt::MatchRecursive));
     if(indexes.isEmpty()) {
         return {};

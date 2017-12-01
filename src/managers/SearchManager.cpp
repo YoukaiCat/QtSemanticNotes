@@ -67,6 +67,6 @@ void SearchManager::setupView(QTableView* view, QSqlQueryModel* model)
 void SearchManager::indexClicked(const QModelIndex& index)
 {
     QSqlRecord note = model->record(index.row());
-    uint id = note.value("id").toUInt();
+    Id id = note.value("id").toString();
     emit resultSelected(id);
 }

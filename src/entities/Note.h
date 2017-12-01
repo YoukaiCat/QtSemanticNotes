@@ -73,7 +73,7 @@ public:
 
     static void addNoteAlias(const Note* note, const QString& alias);
 
-    static QPair<QHash<QString,Id>,QString> getPossibleLinks();
+    static QPair<QHash<QString, QString>, QString> getPossibleLinks();
     static void addNoteLink(const Id& noteFrom, const Id& noteTo);
     static void clearLinksFrom(const Id& noteFrom);
     static void clearLinksTo(const Id& noteTo);
@@ -102,6 +102,8 @@ protected:
          const QDateTime& createdAt,
          const QDateTime& updatedAt,
          const Id& parentId);
+private:
+    static QString currentTime();
 };
 
 #endif // NOTE_H

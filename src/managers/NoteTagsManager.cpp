@@ -58,7 +58,7 @@ void NoteTagsManager::selectFromModel()
 
 void NoteTagsManager::filterModel(shared_ptr<Note> note)
 {
-    QString idFilter = QString("note_id = %1").arg(note->getId());
+    QString idFilter = QString("note_id = '%1'").arg(note->getId().toString());
     model->setFilter(idFilter);
     selectFromModel();
 }

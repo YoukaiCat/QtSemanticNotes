@@ -134,10 +134,10 @@ void Database::defineSchema()
 */
     safeExecQuery(
         "CREATE TABLE notes ( "
-            "id INTEGER PRIMARY KEY, "
+            "id TEXT COLLATE NOCASE PRIMARY KEY, "
             "title TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "content CLOB NOT NULL DEFAULT '', "
-            "parent_id INTEGER REFERENCES notes(id) ON DELETE CASCADE, "
+            "parent_id TEXT REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')) "
         ")");
@@ -146,13 +146,13 @@ void Database::defineSchema()
 
     //Insert root note before fts triggers are created
     safeExecQuery("INSERT INTO notes (id, title, parent_id)"
-        "values (1, 'root', NULL)");
+        "values ('026d6efe-b835-474c-98aa-2cf9aebce321', 'root', NULL)");
 
     safeExecQuery(
         "CREATE TABLE aliases ( "
-            "id INTEGER PRIMARY KEY, "
+            "id TEXT COLLATE NOCASE PRIMARY KEY, "
             "alias TEXT COLLATE NOCASE UNIQUE NOT NULL, "
-            "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
+            "note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(alias, note_id) ON CONFLICT REPLACE "
         ")");
@@ -161,31 +161,31 @@ void Database::defineSchema()
 
     safeExecQuery(
         "CREATE TABLE links ( "
-            "id INTEGER PRIMARY KEY, "
-            "from_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
-            "to_note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
+            "id TEXT COLLATE NOCASE PRIMARY KEY, "
+            "from_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
+            "to_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(from_note_id, to_note_id) ON CONFLICT REPLACE "
-        ")");
+        ") WITHOUT ROWID");
 
     safeExecQuery("CREATE INDEX links_from_note_id_fk ON links(from_note_id)");
     safeExecQuery("CREATE INDEX links_to_note_id_fk ON links(to_note_id)");
 
     safeExecQuery(
         "CREATE TABLE tags ( "
-            "id INTEGER PRIMARY KEY, "
+            "id TEXT COLLATE NOCASE PRIMARY KEY, "
             "name TEXT COLLATE NOCASE UNIQUE NOT NULL, "
             "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')) "
-        ")");
+        ") WITHOUT ROWID");
 
     safeExecQuery(
         "CREATE TABLE note_tags ( "
-            "id INTEGER PRIMARY KEY, "
-            "note_id INTEGER NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
-            "tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
+            "id TEXT COLLATE NOCASE PRIMARY KEY, "
+            "note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE, "
+            "tag_id TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE, "
             "created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')), "
             "UNIQUE(note_id, tag_id) ON CONFLICT REPLACE "
-        ")");
+        ") WITHOUT ROWID");
 
     //Delete tag if it is no longer used by note_tags
     safeExecQuery(
@@ -204,19 +204,24 @@ void Database::defineSchema()
 
     safeExecQuery(
         "CREATE TABLE application ( "
-            "id INTEGER PRIMARY KEY, "
             "name TEXT NOT NULL DEFAULT 'QtSemanticNotes', "
             "database_version REAL NOT NULL DEFAULT '1.0' "
         ")");
 
     //Full-text search
-    //TODO https://github.com/abiliojr/fts5-snowball
+    //HACK: SQLite FTS table with external content support only
+    //integer key as content_rowid. Unfortunatly we use UUID as PK
+    //and can not use it with content_rowid. However, sqlite tables contains
+    //implicit primary key called 'rowid' and we can use it!
+    //http://sqlite.1065341.n5.nabble.com/non-integer-rowid-document-id-td86158.html
+    //TODO: https://github.com/abiliojr/fts5-snowball
     safeExecQuery(
         "CREATE VIRTUAL TABLE notes_fts USING fts5 ("
+            "id UNINDEXED, "
             "title, "
             "content, "
             "content = notes, "
-            "content_rowid = id, "
+            "content_rowid = rowid, "
             "tokenize = 'porter unicode61 remove_diacritics 1'"
         ")");
 
@@ -224,57 +229,58 @@ void Database::defineSchema()
         "CREATE TRIGGER after_insert_note_update_index "
         "AFTER INSERT ON notes "
         "BEGIN "
-            "INSERT INTO notes_fts(rowid, title, content) "
-                "VALUES (NEW.id, NEW.title, NEW.content); "
+            "INSERT INTO notes_fts(rowid, id, title, content) "
+                "VALUES (NEW.rowid, NEW.id, NEW.title, NEW.content); "
         "END;");
 
     safeExecQuery(
         "CREATE TRIGGER after_delete_note_update_index "
         "AFTER DELETE ON notes "
         "BEGIN "
-            "INSERT INTO notes_fts(notes_fts, rowid, title, content) "
-                "VALUES('delete', OLD.id, OLD.title, OLD.content); "
+            "INSERT INTO notes_fts(notes_fts, rowid, id, title, content) "
+                "VALUES('delete', OLD.rowid, OLD.id, OLD.title, OLD.content); "
         "END;");
 
     safeExecQuery(
         "CREATE TRIGGER after_update_note_update_index "
         "AFTER UPDATE ON notes BEGIN "
-            "INSERT INTO notes_fts(notes_fts, rowid, title, content) "
-                "VALUES('delete', OLD.id, OLD.title, OLD.content); "
-            "INSERT INTO notes_fts(rowid, title, content) "
-                "VALUES (NEW.id, NEW.title, NEW.content); "
+            "INSERT INTO notes_fts(notes_fts, rowid, id, title, content) "
+                "VALUES('delete', OLD.rowid, OLD.id, OLD.title, OLD.content); "
+            "INSERT INTO notes_fts(rowid, id, title, content) "
+                "VALUES (NEW.rowid, NEW.id, NEW.title, NEW.content); "
         "END;");
 
     safeExecQuery(
         "CREATE VIRTUAL TABLE aliases_fts USING fts5 ("
+            "id UNINDEXED, "
             "alias, "
             "note_id UNINDEXED, "
             "content = aliases, "
-            "content_rowid = id, "
+            "content_rowid = rowid, "
             "tokenize = 'porter unicode61 remove_diacritics 1'"
         ")");
 
     safeExecQuery("CREATE TRIGGER after_insert_alias_update_index "
         "AFTER INSERT ON aliases "
         "BEGIN "
-            "INSERT INTO aliases_fts(rowid, alias, note_id) "
-                "VALUES (NEW.id, NEW.alias, NEW.note_id); "
+            "INSERT INTO aliases_fts(rowid, id, alias, note_id) "
+                "VALUES (NEW.rowid, NEW.id, NEW.alias, NEW.note_id); "
         "END;");
 
     safeExecQuery("CREATE TRIGGER after_delete_alias_update_index "
         "AFTER DELETE ON aliases "
         "BEGIN "
-            "INSERT INTO aliases_fts(aliases_fts, rowid, alias, note_id) "
-                "VALUES('delete', OLD.id, OLD.alias, OLD.note_id); "
+            "INSERT INTO aliases_fts(aliases_fts, rowid, id, alias, note_id) "
+                "VALUES('delete', OLD.rowid, OLD.id, OLD.alias, OLD.note_id); "
         "END;");
 
     safeExecQuery(
         "CREATE TRIGGER after_update_alias_update_index "
         "AFTER UPDATE ON aliases BEGIN "
-            "INSERT INTO aliases_fts(aliases_fts, rowid, alias, note_id) "
-                "VALUES('delete', OLD.id, OLD.alias, OLD.note_id); "
-            "INSERT INTO aliases_fts(rowid, alias, note_id) "
-                "VALUES (NEW.id, NEW.alias, NEW.note_id); "
+            "INSERT INTO aliases_fts(aliases_fts, rowid, id, alias, note_id) "
+                "VALUES('delete', OLD.rowid, OLD.id, OLD.alias, OLD.note_id); "
+            "INSERT INTO aliases_fts(rowid, id, alias, note_id) "
+                "VALUES (NEW.rowid, NEW.id, NEW.alias, NEW.note_id); "
         "END;");
 
     safeExecQuery("INSERT INTO application (name, database_version)"

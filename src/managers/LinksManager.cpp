@@ -61,8 +61,8 @@ void LinksManager::selectFromModel()
 
 void LinksManager::filterModel(shared_ptr<Note> note)
 {
-    QString fromIdFilter = QString("from_note_id = %1").arg(note->getId());
-    QString toIdFilter = QString("to_note_id = %1").arg(note->getId());
+    QString fromIdFilter = QString("from_note_id = '%1'").arg(note->getId().toString());
+    QString toIdFilter = QString("to_note_id = '%1'").arg(note->getId().toString());
     linkedFromModel->setFilter(toIdFilter);
     hasLinksToModel->setFilter(fromIdFilter);
     selectFromModel();
@@ -98,7 +98,7 @@ void LinksManager::updateBackLinksByTitleAndId(const QString& title, Id noteId)
     loadPossibleLinks();
     QSqlQuery q = Search::findNotesByContent(title);
     while(q.next()) {
-        Id hasLinkId = q.value(0).toUInt();
+        Id hasLinkId = q.value(0).toString();
         QString content = q.value(1).toString();
         QList<Id> links = findLinks(content);
         Note::clearLinksFrom(hasLinkId);
@@ -171,7 +171,7 @@ QString LinksManager::makeLinks(QString rightPart)
         fixedTitle = QRegularExpression::escape(fixedTitle);
         Q_ASSERT(possibleLinks.first.contains(fixedTitle));
         Id id = possibleLinks.first.value(fixedTitle);
-        QString link = QString("<a href='qtsemanticnotes://0.0.0.0/?%1'>%2</a>").arg(id).arg(title);
+        QString link = QString("<a href='qtsemanticnotes://0.0.0.0/?%1'>%2</a>").arg(id.toString()).arg(title);
         int position = match.capturedStart() + match.capturedLength();
         leftPart = rightPart.left(position);
         rightPart = rightPart.mid(position);
