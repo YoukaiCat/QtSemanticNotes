@@ -41,7 +41,7 @@ signals:
     void possibleLinksLoaded();
     void linksUpdated();
     void backLinksUpdated();
-//    void linkSelected(Id noteId);
+    void linkClicked(Id noteId);
 
 public slots:
     void setup(QTableView* linkedFromView,
@@ -55,9 +55,9 @@ public slots:
     void updateBackLinks(shared_ptr<Note> note);
     void updateBackLinksByTitleAndId(const QString& title, Id noteId);
 
-//private slots:
-//    void onLinkedFromSelectionChange();
-//    void onLinksToSelectionChange();
+private slots:
+    void onLinkedFromDoubleClicked(const QModelIndex& index);
+    void onLinksToDoubleClicked(const QModelIndex& index);
 
 private:
     unique_ptr<QSqlRelationalTableModel> createLinkedFromModel();

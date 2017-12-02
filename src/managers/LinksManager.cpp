@@ -20,6 +20,7 @@
 #include "LinksManager.h"
 
 #include "../entities/Search.h"
+#include "../database/Database.h"
 
 #include <QRegularExpression>
 #include <QSqlQuery>
@@ -41,10 +42,10 @@ void LinksManager::setup(QTableView* linkedFromView, QTableView* hasLinksToView)
     hasLinksToModel = createHasLinksToModel();
     setupViewHasLinksTo(hasLinksToView, hasLinksToModel.get());
 
-//    connect(linkedFromView->selectionModel(), &QItemSelectionModel::selectionChanged,
-//            this, &LinksManager::onLinkedFromSelectionChange);
-//    connect(linkedFromView->selectionModel(), &QItemSelectionModel::selectionChanged,
-//            this, &LinksManager::onLinkedFromSelectionChange);
+    connect(linkedFromView, &QTableView::doubleClicked,
+            this, &LinksManager::onLinkedFromDoubleClicked);
+    connect(hasLinksToView, &QTableView::doubleClicked,
+            this, &LinksManager::onLinksToDoubleClicked);
 }
 
 void LinksManager::clearModel()
@@ -109,21 +110,27 @@ void LinksManager::updateBackLinksByTitleAndId(const QString& title, Id noteId)
     emit backLinksUpdated();
 }
 
-//void LinksManager::onLinkedFromSelectionChange()
-//{
-//    QModelIndexList indexes = linkedFromView->selectionModel()->selectedIndexes();
-//    if(!indexes.isEmpty()) {
+void LinksManager::onLinkedFromDoubleClicked(const QModelIndex& index)
+{
+    Id id = linkedFromModel->record(index.row()).value(0).toString();
+    QSqlQuery q;
+    q.prepare("SELECT from_note_id FROM links WHERE id = :id");
+    q.bindValue(":id", id.toString());
+    Database::safeExecPreparedQuery(q);
+    if (q.next())
+        emit linkClicked(q.value(0).toString());
+}
 
-//    }
-//}
-
-//void LinksManager::onLinksToSelectionChange()
-//{
-//    QModelIndexList indexes = linkedFromView->selectionModel()->selectedIndexes();
-//    if(!indexes.isEmpty()) {
-
-//    }
-//}
+void LinksManager::onLinksToDoubleClicked(const QModelIndex& index)
+{
+    Id id = hasLinksToModel->record(index.row()).value(0).toString();
+    QSqlQuery q;
+    q.prepare("SELECT to_note_id FROM links WHERE id = :id");
+    q.bindValue(":id", id.toString());
+    Database::safeExecPreparedQuery(q);
+    if (q.next())
+        emit linkClicked(q.value(0).toString());
+}
 
 unique_ptr<QSqlRelationalTableModel> LinksManager::createLinkedFromModel()
 {

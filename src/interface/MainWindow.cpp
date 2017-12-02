@@ -76,6 +76,8 @@ MainWindow::MainWindow(QWidget* parent) :
             &linksManager, &LinksManager::selectFromModel);
     connect(&linksManager, &LinksManager::backLinksUpdated,
             &linksManager, &LinksManager::selectFromModel);
+    connect(&linksManager, &LinksManager::linkClicked,
+            &notesManager, &NotesManager::selectNoteInTreeById);
 
     connect(&notesManager, &NotesManager::noteModified,
             this, &MainWindow::showNoteIsModified);
