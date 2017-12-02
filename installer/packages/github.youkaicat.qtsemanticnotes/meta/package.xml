@@ -2,7 +2,7 @@
 <Package>
     <DisplayName>QtSemanticNotes</DisplayName>
     <Description>Installs the Application</Description>
-    <Version>0.2.2</Version>
+    <Version>0.3.0</Version>
     <ReleaseDate>2017-11-28</ReleaseDate>
     <Licenses>
         <License name="GNU General Public License Version 3" file="COPYING.txt" />
