@@ -858,7 +858,7 @@
     <string>Previous</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Left, Backspace</string>
+    <string>Left</string>
    </property>
   </action>
   <action name="actionForward">
@@ -873,7 +873,7 @@
     <string>Next</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Right</string>
+    <string>Right</string>
    </property>
   </action>
   <action name="actionViewMode">
