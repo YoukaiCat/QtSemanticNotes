@@ -146,6 +146,12 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(&tagsManager, &TagsManager::tagNotSelected,
             this, &MainWindow::disableTagActions);
 
+    connect(&tagsManager, &TagsManager::tagRemoved,
+            &noteTagsManager, &NoteTagsManager::selectFromModel);
+
+    connect(&tagsManager, &TagsManager::tagRemoved,
+            &tagsManager, &TagsManager::loadTags);
+
     //NoteTags
     //Показать тэги для открытой заметки
     connect(&notesManager, &NotesManager::noteOpened,
