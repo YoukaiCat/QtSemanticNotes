@@ -90,6 +90,8 @@ void Tab::saveNote()
 
 void Tab::closeNote()
 {
+    editDoc.clear();
+    viewDoc.clear();
     browser->setEnabled(false);
 }
 
