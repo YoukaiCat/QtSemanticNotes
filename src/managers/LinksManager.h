@@ -53,7 +53,7 @@ public slots:
 
     void updateLinks(shared_ptr<Note> note);
     void updateBackLinks(shared_ptr<Note> note);
-    void updateBackLinksByTitleAndId(const QString& title, Id noteId);
+    void updateBackLinksById(Id noteId);
 
 private slots:
     void onLinkedFromDoubleClicked(const QModelIndex& index);

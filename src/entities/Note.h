@@ -72,6 +72,7 @@ public:
     Note & operator=(Note&& other) noexcept = delete;
 
     static void addNoteAlias(const Note* note, const QString& alias);
+    static QStringList getAliases(const Id& noteId);
 
     static QPair<QHash<QString, QString>, QString> getPossibleLinks();
     static void addNoteLink(const Id& noteFrom, const Id& noteTo);

@@ -68,9 +68,9 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(&notesManager, &NotesManager::noteRemoved,
             &linksManager, &LinksManager::updateBackLinks);
     connect(&aliasesManager, &AliasesManager::aliasAdded,
-            &linksManager, &LinksManager::updateBackLinksByTitleAndId);
+            &linksManager, &LinksManager::updateBackLinksById);
     connect(&aliasesManager, &AliasesManager::aliasRemoved,
-            &linksManager, &LinksManager::updateBackLinksByTitleAndId);
+            &linksManager, &LinksManager::updateBackLinksById);
 
     connect(&linksManager, &LinksManager::linksUpdated,
             &linksManager, &LinksManager::selectFromModel);

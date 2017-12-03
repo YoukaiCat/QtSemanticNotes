@@ -87,24 +87,26 @@ void LinksManager::loadPossibleLinks()
 
 void LinksManager::updateBackLinks(shared_ptr<Note> note)
 {
-    updateBackLinksByTitleAndId(note->getTitle(), note->getId());
+    updateBackLinksById(note->getId());
 }
 
-void LinksManager::updateBackLinksByTitleAndId(const QString& title, Id noteId)
+void LinksManager::updateBackLinksById(Id noteId)
 {
     //old links
     Note::clearLinksTo(noteId);
     //new links
-    Q_UNUSED(noteId)
     loadPossibleLinks();
-    QSqlQuery q = Search::findNotesByContent(title);
-    while(q.next()) {
-        Id hasLinkId = q.value(0).toString();
-        QString content = q.value(1).toString();
-        QList<Id> links = findLinks(content);
-        Note::clearLinksFrom(hasLinkId);
-        for(auto& id : links) {
-            Note::addNoteLink(hasLinkId, id);
+    QStringList aliases = Note::getAliases(noteId);
+    for(QString& alias : aliases) {
+        QSqlQuery q = Search::findNotesByContent(alias);
+        while(q.next()) {
+            Id hasLinkId = q.value(0).toString();
+            QString content = q.value(1).toString();
+            QList<Id> links = findLinks(content);
+            Note::clearLinksFrom(hasLinkId);
+            for(auto& id : links) {
+                Note::addNoteLink(hasLinkId, id);
+            }
         }
     }
     emit backLinksUpdated();

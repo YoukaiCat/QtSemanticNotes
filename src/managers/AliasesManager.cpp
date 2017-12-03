@@ -63,12 +63,7 @@ void AliasesManager::selectFromModel()
 void AliasesManager::addAlias(shared_ptr<Note> note, const QString& alias)
 {
     Note::addNoteAlias(note.get(), alias);
-    emit aliasAdded(alias, note->getId());
-}
-
-QString AliasesManager::aliasByIndex(const QModelIndex& index)
-{
-    return model->record(index.row()).value(1).toString();
+    emit aliasAdded(note->getId());
 }
 
 Id AliasesManager::noteIdByIndex(const QModelIndex& index)
@@ -78,8 +73,9 @@ Id AliasesManager::noteIdByIndex(const QModelIndex& index)
 
 void AliasesManager::removeAlias(const QModelIndex& index)
 {
+    auto noteId = noteIdByIndex(index);
     model->removeRows(index.row(), 1);
-    emit aliasRemoved(aliasByIndex(index), noteIdByIndex(index));
+    emit aliasRemoved(noteId);
 }
 
 void AliasesManager::removeSelectedAliases()

@@ -268,6 +268,22 @@ void Note::addNoteAlias(const Note* note, const QString& alias)
     Database::safeExecPreparedQuery(insertNoteAlias);
 }
 
+QStringList Note::getAliases(const Id& noteId)
+{
+    QSqlQuery q;
+    q.prepare("SELECT title FROM notes WHERE id = :id "
+              "UNION "
+              "SELECT alias FROM aliases WHERE note_id = :id");
+    q.bindValue(":id", noteId.toString());
+    Database::safeExecPreparedQuery(q);
+
+    QStringList aliases;
+    while(q.next()) {
+        aliases.append(q.value(0).toString());
+    }
+    return aliases;
+}
+
 QPair<QHash<QString,QString>,QString> Note::getPossibleLinks()
 {
     QSqlQuery q;

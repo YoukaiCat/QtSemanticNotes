@@ -36,8 +36,8 @@ public:
     explicit AliasesManager(QObject* parent = nullptr);
 
 signals:
-    void aliasAdded(const QString& alias, Id noteId);
-    void aliasRemoved(const QString& alias, Id noteId);
+    void aliasAdded(Id noteId);
+    void aliasRemoved(Id noteId);
     void aliasSelected();
     void aliasNotSelected();
 
