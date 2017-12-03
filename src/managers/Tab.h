@@ -68,6 +68,7 @@ private:
     unique_ptr<QTextBrowser> browser;
     LinksManager* manager;
     void maybeSaveNote();
+    void setCursorPosition(int cursorPosition);
 };
 
 #endif // TAB_H

@@ -100,13 +100,22 @@ void Tab::noteRemoved(shared_ptr<Note> note)
     History::noteRemoved(note);
 }
 
+void Tab::setCursorPosition(int cursorPosition)
+{
+    auto cursor = browser->textCursor();
+    cursor.setPosition(cursorPosition);
+    browser->setTextCursor(cursor);
+}
+
 void Tab::switchMode()
 {
+    int cursorPosition = browser->textCursor().position();
     if (browser->isReadOnly()) {
         enableEditMode();
     } else {
         enableViewMode();
     }
+    setCursorPosition(cursorPosition);
 }
 
 void Tab::enableViewMode()
