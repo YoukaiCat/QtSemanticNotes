@@ -96,6 +96,7 @@ void Database::openDatabase(const QString& path)
     //works only when the pragma query is the first query
     //https://forum.qt.io/topic/77967/foreign-key-is-ignored-when-deleting/3
     safeExecQuery("PRAGMA foreign_keys = ON;");
+    safeExecQuery("PRAGMA journal_mode = WAL;");
 
     QSqlQuery query("select name from application");
     if (!(query.next() && (query.value(0).toString() == QString("QtSemanticNotes")))) {
