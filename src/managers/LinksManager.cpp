@@ -82,7 +82,9 @@ void LinksManager::updateLinks(shared_ptr<Note> note)
 void LinksManager::loadPossibleLinks()
 {
     possibleLinks = Note::getPossibleLinks();
-    titlesRegex = QRegularExpression("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
+    titlesRegex = QRegularExpression("\\b(" + possibleLinks.second + ")\\b",
+                                     QRegularExpression::CaseInsensitiveOption |
+                                     QRegularExpression::UseUnicodePropertiesOption);
     titlesRegex.optimize();
     emit possibleLinksLoaded();
 }
