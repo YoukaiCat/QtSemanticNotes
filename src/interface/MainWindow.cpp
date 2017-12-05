@@ -47,6 +47,11 @@ MainWindow::MainWindow(QWidget* parent) :
     setupTrayIcon();
     setupDatabase();
 
+    //TODO: implement toolbar actions
+    ui->mainToolBar->hide();
+    //TODO: show highlighted link in status bar
+    ui->statusBar->hide();
+
     qApp->installEventFilter(this);
 
     linksManager.setup(ui->tableViewLinkedFrom, ui->tableViewLinksTo);
