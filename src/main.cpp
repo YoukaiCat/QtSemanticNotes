@@ -21,8 +21,15 @@
 
 #include <QApplication>
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 int main(int argc, char* argv[])
 {
+    QApplication::setApplicationName("QtSemanticNotes");
+#ifdef VERSION
+    QApplication::setApplicationVersion(TOSTRING(VERSION));
+#endif
     QApplication a(argc, argv);
     MainWindow w;
     w.show();

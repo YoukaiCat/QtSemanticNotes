@@ -674,15 +674,13 @@ bool MainWindow::eventFilter(QObject* object, QEvent* event)
     }
 }
 
-#define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
 void MainWindow::on_actionAboutQtSemanticNotes_triggered()
 {
-#ifdef VERSION
-    QMessageBox::about(this, "About QtSemanticNotes", tr("QtSemanticNotes version: %1\n\n").arg(TOSTRING(VERSION)) +
+    QMessageBox::about(this, "About QtSemanticNotes",
+                       tr("QtSemanticNotes version: %1\n\n")
+                       .arg(QApplication::applicationVersion()) +
                        tr("Copyright © 2017 Vladislav Mileshkin\n\n") +
                        tr("Licensed under the terms of the\nGNU General Public License Version 3"));
-#endif
 }
 
 void MainWindow::on_actionAboutQt_triggered()
