@@ -73,6 +73,7 @@ private:
     QList<Id> findLinks(const QString& text);
 
     QPair<QHash<QString, QString>, QString> possibleLinks;
+    QRegularExpression titlesRegex;
 };
 
 #endif // LINKSMANAGER_H

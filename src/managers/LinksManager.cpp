@@ -82,6 +82,8 @@ void LinksManager::updateLinks(shared_ptr<Note> note)
 void LinksManager::loadPossibleLinks()
 {
     possibleLinks = Note::getPossibleLinks();
+    titlesRegex = QRegularExpression("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
+    titlesRegex.optimize();
     emit possibleLinksLoaded();
 }
 
@@ -172,7 +174,6 @@ QString LinksManager::makeLinks(QString rightPart)
 {
     QStringList parts;
     QString leftPart;
-    QRegularExpression titlesRegex("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatch match = titlesRegex.match(rightPart);
     while(match.hasMatch()) {
         QString title = match.captured(0);
@@ -195,7 +196,6 @@ QString LinksManager::makeLinks(QString rightPart)
 QList<Id> LinksManager::findLinks(const QString& text)
 {
     QList<Id> linkedNotes;
-    QRegularExpression titlesRegex("(" + possibleLinks.second + ")", QRegularExpression::CaseInsensitiveOption);
     QRegularExpressionMatchIterator i = titlesRegex.globalMatch(text);
     while(i.hasNext()) {
         QRegularExpressionMatch match = i.next();
