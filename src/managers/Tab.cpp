@@ -19,6 +19,7 @@
 
 #include "Tab.h"
 
+#include <QScrollBar>
 #include <QDebug>
 
 using std::make_unique;
@@ -110,12 +111,14 @@ void Tab::setCursorPosition(int cursorPosition)
 void Tab::switchMode()
 {
     int cursorPosition = browser->textCursor().position();
+    int scrollPosition = browser->verticalScrollBar()->value();
     if (browser->isReadOnly()) {
         enableEditMode();
     } else {
         enableViewMode();
     }
     setCursorPosition(cursorPosition);
+    browser->verticalScrollBar()->setValue(scrollPosition);
 }
 
 void Tab::enableViewMode()
