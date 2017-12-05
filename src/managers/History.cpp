@@ -39,6 +39,7 @@ shared_ptr<Note> History::forward()
     if (forwardStack.isEmpty()) {
         emit forwardAwailable(false);
     }
+    truncate();
     backwardStack.push_front(current);
     current = note;
     emit backwardAwailable(true);
@@ -51,10 +52,22 @@ shared_ptr<Note> History::backward()
     if (backwardStack.isEmpty()) {
         emit backwardAwailable(false);
     }
+    truncate();
     forwardStack.push_front(current);
     current = note;
     emit forwardAwailable(true);
     return note;
+}
+
+void History::truncate()
+{
+    //TODO: preferences
+    if (backwardStack.size() > 10) {
+        backwardStack.removeLast();
+    }
+    if (forwardStack.size() > 10) {
+        forwardStack.removeLast();
+    }
 }
 
 void History::noteOpened(shared_ptr<Note> note)
@@ -66,6 +79,7 @@ void History::noteOpened(shared_ptr<Note> note)
             if (!forwardStack.isEmpty() && forwardStack.first() != note){
                 clearForwardHistory();
             }
+            truncate();
             backwardStack.push_front(current);
             emit backwardAwailable(true);
             current = note;

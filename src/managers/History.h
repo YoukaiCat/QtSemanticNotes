@@ -50,6 +50,8 @@ protected:
     shared_ptr<Note> backward();
 
 private:
+    void truncate();
+
     shared_ptr<Note> current;
     QList<shared_ptr<Note>> forwardStack;
     QList<shared_ptr<Note>> backwardStack;
