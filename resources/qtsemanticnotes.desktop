@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=QtSemanticNotes
+GenericName=Notes Manager
+Icon=icon.ico
+Exec=qtsemanticnotes
+Terminal=false
+X-KDE-StartupNotify=true
+X-DBUS-StartupType=Unique
+X-DBUS-ServiceName=qtsemanticnotes
+Categories=Qt;KDE;Utility;
+Comment=Note taking application that features automatic linking, tree view and tags
