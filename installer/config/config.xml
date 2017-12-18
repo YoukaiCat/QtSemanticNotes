@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
     <Name>QtSemanticNotes</Name>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <Title>QtSemanticNotes</Title>
     <Publisher>Vladislav Mileshkin</Publisher>
     <ProductUrl>https://github.com/YoukaiCat/QtSemanticNotes</ProductUrl>
